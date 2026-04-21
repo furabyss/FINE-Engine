@@ -323,10 +323,15 @@ textarea {
 
 .list-pane-header {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 16px;
   padding-right: 66px;
+}
+
+.list-pane-header h2 {
+  white-space: nowrap;
 }
 
 .list-pane-header p {
@@ -359,7 +364,24 @@ textarea {
 .list-pane-actions {
   display: flex;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+  align-self: flex-start;
+}
+
+.list-pane-actions .btn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .item-list {
@@ -786,6 +808,15 @@ textarea {
     flex: 1;
   }
 
+  .list-pane-actions {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .list-pane-actions .btn {
+    flex: 0 0 auto;
+  }
+
   .split-toggle-button {
     order: 0;
     margin-right: 0;
@@ -905,8 +936,8 @@ textarea {
                 <p>장면을 선택해 본문과 선택지를 편집합니다.</p>
               </div>
               <div class="list-pane-actions">
-                <button id="btn-add-scene" class="btn btn-secondary" type="button">추가</button>
-                <button id="btn-delete-scene" class="btn btn-danger" type="button">삭제</button>
+                <button id="btn-add-scene" class="btn btn-secondary" type="button" title="장면 추가" aria-label="장면 추가">+</button>
+                <button id="btn-delete-scene" class="btn btn-danger" type="button" title="장면 삭제" aria-label="장면 삭제">-</button>
               </div>
             </div>
             <div class="list-pane-search">
@@ -981,8 +1012,8 @@ textarea {
                 <p>엔딩 제목과 설명을 수정하거나 새로 추가합니다.</p>
               </div>
               <div class="list-pane-actions">
-                <button id="btn-add-ending" class="btn btn-secondary" type="button">추가</button>
-                <button id="btn-delete-ending" class="btn btn-danger" type="button">삭제</button>
+                <button id="btn-add-ending" class="btn btn-secondary" type="button" title="엔딩 추가" aria-label="엔딩 추가">+</button>
+                <button id="btn-delete-ending" class="btn btn-danger" type="button" title="엔딩 삭제" aria-label="엔딩 삭제">-</button>
               </div>
             </div>
             <div class="list-pane-search">
