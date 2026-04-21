@@ -73,6 +73,71 @@ body {
   min-height: 100svh;
 }
 
+@media (min-width: 841px) {
+  body {
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  body > .editor-shell {
+    height: calc(100svh - 24px);
+    margin: 12px auto;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+
+  body > .editor-shell > .editor-header {
+    gap: 18px;
+    padding: 20px 24px;
+  }
+
+  body > .editor-shell > .editor-header .editor-kicker {
+    margin-bottom: 6px;
+  }
+
+  body > .editor-shell > .editor-header .editor-subtitle {
+    margin-top: 6px;
+  }
+
+  body > .editor-shell > .editor-toolbar {
+    gap: 12px;
+    margin-top: 10px;
+    padding: 14px 18px;
+  }
+
+  body > .editor-shell > .tab-bar {
+    margin-top: 10px;
+    padding: 0 20px;
+  }
+
+  body > .editor-shell > .editor-main {
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 8px 4px;
+  }
+
+  .editor-shell .tab-panel.is-active {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .editor-shell .editor-split {
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  #tab-meta .panel-card,
+  .editor-shell .list-pane,
+  .editor-shell .editor-pane {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+}
+
 button, input, textarea, select {
   font: inherit;
 }
@@ -308,6 +373,7 @@ textarea {
   display: none;
 }
 
+
 .list-pane,
 .editor-pane {
   min-height: 70svh;
@@ -393,12 +459,6 @@ textarea {
   gap: 8px;
   overflow: visible;
   padding-right: 0;
-}
-
-.list-pane.is-scrollable,
-.editor-pane.is-scrollable {
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .item-row {
@@ -840,13 +900,10 @@ textarea {
   .tab-bar {
     overflow: auto;
     padding-bottom: 2px;
+    padding: 0 8px 2px;
   }
 
   .tab-btn {
-
-  .tab-bar {
-    padding: 0 8px;
-  }
     white-space: nowrap;
   }
 
@@ -2648,16 +2705,12 @@ const Engine = (() => {
     dirty: false,
   };
 
-  const splitPaneSync = {
-    scheduled: false,
-    resizeObserver: null,
-  };
-
   const elements = {
     editorTitle: document.getElementById("editor-title"),
     editorVersion: document.getElementById("editor-engine-version"),
     status: document.getElementById("editor-status"),
     counts: document.getElementById("editor-counts"),
+    editorMain: document.querySelector(".editor-main"),
     helpButton: document.getElementById("btn-help"),
     connectFileButton: document.getElementById("btn-connect-file"),
     importFileInput: document.getElementById("input-import-data"),
@@ -2669,6 +2722,7 @@ const Engine = (() => {
     closeHelpButton: document.getElementById("btn-close-help"),
     tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
     tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
+    metaPanelCard: document.querySelector("#tab-meta .panel-card"),
     metaTitle: document.getElementById("meta-title"),
     metaVersion: document.getElementById("meta-version"),
     metaNameFormat: document.getElementById("meta-name-format"),
@@ -2721,7 +2775,6 @@ const Engine = (() => {
     ensureSelections();
     renderHelpModal();
     bindEvents();
-    setupSplitPaneSync();
     render();
     setStatus("빈 에디터를 불러왔습니다. JS 파일을 업로드하거나 새 데이터를 작성하세요.", "warn");
   }
@@ -2730,8 +2783,10 @@ const Engine = (() => {
     elements.tabButtons.forEach((button) => {
       button.addEventListener("click", () => {
         if (!flushActiveEditor()) return;
-        state.activeTab = button.dataset.tab;
-        renderTabs();
+        const nextTab = button.dataset.tab;
+        const shouldResetScroll = state.activeTab !== nextTab;
+        state.activeTab = nextTab;
+        renderTabs({ resetScroll: shouldResetScroll });
       });
     });
 
@@ -2783,7 +2838,6 @@ const Engine = (() => {
         hideHelpModal();
       }
     });
-    window.addEventListener("resize", scheduleSplitPaneSync);
   }
 
   function render() {
@@ -2793,7 +2847,7 @@ const Engine = (() => {
     updateReferenceList();
   }
 
-  function renderTabs() {
+  function renderTabs({ resetScroll = false } = {}) {
     elements.tabButtons.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.tab === state.activeTab);
     });
@@ -2813,7 +2867,9 @@ const Engine = (() => {
       renderEndingForm();
     }
 
-    scheduleSplitPaneSync();
+    if (resetScroll) {
+      resetTabScroll(state.activeTab);
+    }
   }
 
   function renderSplitPaneStates() {
@@ -2845,86 +2901,26 @@ const Engine = (() => {
     expandButton.setAttribute("aria-label", `${label} 펼치기`);
   }
 
-  function setupSplitPaneSync() {
-    if (typeof ResizeObserver !== "function") {
-      return;
-    }
-
-    splitPaneSync.resizeObserver = new ResizeObserver(() => {
-      scheduleSplitPaneSync();
-    });
-
-    [
-      elements.sceneListHeader,
-      elements.sceneList,
-      elements.sceneForm,
-      elements.endingListHeader,
-      elements.endingList,
-      elements.endingForm,
-    ]
-      .filter(Boolean)
-      .forEach((target) => {
-        splitPaneSync.resizeObserver.observe(target);
-      });
-  }
-
-  function scheduleSplitPaneSync() {
-    if (splitPaneSync.scheduled) {
-      return;
-    }
-
-    splitPaneSync.scheduled = true;
-    requestAnimationFrame(() => {
-      splitPaneSync.scheduled = false;
-      syncActiveSplitPaneHeights();
+  function resetTabScroll(tabName) {
+    getTabScrollContainers(tabName).forEach((container) => {
+      container.scrollTop = 0;
     });
   }
 
-  function syncActiveSplitPaneHeights() {
-    syncSplitPaneHeights(
-      state.activeTab === "scenes" ? elements.sceneSplit : null,
-      [elements.sceneListPane, elements.sceneEditorPane]
-    );
-    syncSplitPaneHeights(
-      state.activeTab === "endings" ? elements.endingSplit : null,
-      [elements.endingListPane, elements.endingEditorPane]
-    );
-  }
-
-  function syncSplitPaneHeights(split, panes) {
-    if (!panes.every(Boolean)) {
-      return;
+  function getTabScrollContainers(tabName) {
+    if (tabName === "meta") {
+      return [elements.metaPanelCard].filter(Boolean);
     }
 
-    if (
-      !split ||
-      !split.offsetParent ||
-      split.classList.contains("is-list-collapsed") ||
-      window.matchMedia("(max-width: 1120px)").matches
-    ) {
-      resetSplitPaneHeights(panes);
-      return;
+    if (tabName === "scenes") {
+      return [elements.sceneListPane, elements.sceneEditorPane].filter(Boolean);
     }
 
-    resetSplitPaneHeights(panes);
+    if (tabName === "endings") {
+      return [elements.endingListPane, elements.endingEditorPane].filter(Boolean);
+    }
 
-    const naturalHeights = panes.map((pane) => Math.ceil(pane.getBoundingClientRect().height));
-    const targetHeight = Math.min(...naturalHeights);
-
-    panes.forEach((pane) => {
-      pane.style.height = `${targetHeight}px`;
-      pane.classList.toggle("is-scrollable", pane.scrollHeight > targetHeight + 1);
-    });
-  }
-
-  function resetSplitPaneHeights(panes) {
-    panes.forEach((pane) => {
-      if (!pane) {
-        return;
-      }
-      pane.style.height = "";
-      pane.classList.remove("is-scrollable");
-    });
+    return [];
   }
 
   function updateHeader() {
@@ -3012,7 +3008,6 @@ const Engine = (() => {
       elements.sceneList.appendChild(
         createEmptyListMessage(query ? "검색 결과가 없습니다." : "장면이 없습니다.")
       );
-      scheduleSplitPaneSync();
       return;
     }
 
@@ -3031,7 +3026,6 @@ const Engine = (() => {
       elements.sceneList.appendChild(button);
     });
 
-    scheduleSplitPaneSync();
   }
 
   function renderSceneForm() {
@@ -3068,7 +3062,6 @@ const Engine = (() => {
     elements.sceneAutoNext.value = scene.autoNext || "";
     elements.sceneAutoDelay.value = scene.autoDelay ?? "";
     renderChoices(scene.choices || []);
-    scheduleSplitPaneSync();
   }
 
   function renderChoices(choices) {
@@ -3078,7 +3071,6 @@ const Engine = (() => {
       empty.className = "choice-card";
       empty.innerHTML = "<strong>선택지가 없습니다.</strong><p>새 선택지를 추가해 분기를 만들 수 있습니다.</p>";
       elements.sceneChoices.appendChild(empty);
-      scheduleSplitPaneSync();
       return;
     }
 
@@ -3124,7 +3116,6 @@ const Engine = (() => {
       elements.sceneChoices.appendChild(card);
     });
 
-    scheduleSplitPaneSync();
   }
 
   function renderEndingList() {
@@ -3142,7 +3133,6 @@ const Engine = (() => {
       elements.endingList.appendChild(
         createEmptyListMessage(query ? "검색 결과가 없습니다." : "엔딩이 없습니다.")
       );
-      scheduleSplitPaneSync();
       return;
     }
 
@@ -3161,7 +3151,6 @@ const Engine = (() => {
       elements.endingList.appendChild(button);
     });
 
-    scheduleSplitPaneSync();
   }
 
   function renderEndingForm() {
@@ -3178,7 +3167,6 @@ const Engine = (() => {
     elements.endingId.value = state.selectedEndingId;
     elements.endingTitle.value = ending.title || "";
     elements.endingDescription.value = ending.description || "";
-    scheduleSplitPaneSync();
   }
 
   function handleSceneSearchInput(event) {
@@ -3194,13 +3182,11 @@ const Engine = (() => {
   function toggleSceneList() {
     state.sceneListCollapsed = !state.sceneListCollapsed;
     renderSplitPaneStates();
-    scheduleSplitPaneSync();
   }
 
   function toggleEndingList() {
     state.endingListCollapsed = !state.endingListCollapsed;
     renderSplitPaneStates();
-    scheduleSplitPaneSync();
   }
 
   function normalizeSearchQuery(value) {
