@@ -1,0 +1,4212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FINE 엔진 에디터</title>
+  <!-- INLINE_EDITOR_STYLE_START -->
+  <style>
+:root {
+  --bg: #f4ede2;
+  --bg-strong: #eadfce;
+  --panel: rgba(255, 250, 242, 0.92);
+  --panel-strong: #fffaf2;
+  --line: #d8c6af;
+  --line-strong: #b6916a;
+  --text: #1f2430;
+  --text-dim: #6b665f;
+  --accent: #b84d2f;
+  --accent-deep: #8f351c;
+  --danger: #9f2d2d;
+  --shadow: 0 24px 60px rgba(68, 42, 19, 0.12);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --font-body: "Pretendard", "Noto Sans KR", sans-serif;
+  --font-display: "Nanum Myeongjo", "AppleMyungjo", serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(184, 77, 47, 0.14), transparent 30%),
+    linear-gradient(180deg, #f7f1e6 0%, #efe4d4 100%);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+body {
+  min-height: 100svh;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.editor-shell {
+  width: min(1440px, calc(100% - 32px));
+  margin: 24px auto 40px;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px 32px;
+  border: 1px solid rgba(184, 145, 106, 0.28);
+  border-radius: 32px;
+  background: rgba(255, 250, 242, 0.78);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+.editor-kicker {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.editor-kicker-version {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(184, 145, 106, 0.28);
+  background: rgba(255, 250, 242, 0.88);
+  color: var(--accent-deep);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+
+.editor-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.08;
+}
+
+.editor-subtitle {
+  margin: 10px 0 0;
+  max-width: 720px;
+  color: var(--text-dim);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff9f4;
+  box-shadow: 0 16px 28px rgba(184, 77, 47, 0.22);
+}
+
+.btn-secondary {
+  background: #efe2d1;
+  color: var(--text);
+  border: 1px solid rgba(184, 145, 106, 0.32);
+}
+
+.btn-danger {
+  background: #f8e6e2;
+  color: var(--danger);
+  border: 1px solid rgba(159, 45, 45, 0.24);
+}
+
+.editor-toolbar {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 18px 22px;
+  border: 1px solid rgba(184, 145, 106, 0.22);
+  border-radius: 24px;
+  background: rgba(255, 250, 242, 0.64);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #fff6ea;
+  border: 1px solid rgba(184, 145, 106, 0.3);
+  font-weight: 700;
+}
+
+.status-pill[data-tone="success"] {
+  background: #eff8ef;
+  border-color: rgba(61, 132, 82, 0.24);
+  color: #2f6d45;
+}
+
+.status-pill[data-tone="warn"] {
+  background: #fff3e4;
+  border-color: rgba(184, 77, 47, 0.22);
+  color: var(--accent-deep);
+}
+
+.status-pill[data-tone="error"] {
+  background: #fdecec;
+  border-color: rgba(159, 45, 45, 0.25);
+  color: var(--danger);
+}
+
+.editor-counts {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.editor-note {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.tab-btn {
+  padding: 14px 18px;
+  border-radius: 18px 18px 0 0;
+  background: rgba(255, 250, 242, 0.65);
+  color: var(--text-dim);
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab-btn.is-active {
+  color: var(--text);
+  background: var(--panel-strong);
+  border-color: rgba(184, 145, 106, 0.26);
+  border-bottom-color: var(--panel-strong);
+}
+
+.editor-main {
+  margin-top: -1px;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-active {
+  display: block;
+}
+
+.panel-card {
+  border: 1px solid rgba(184, 145, 106, 0.22);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+#tab-meta .panel-card {
+  padding: 28px;
+}
+
+.panel-card h2,
+.panel-card h3 {
+  margin: 0;
+}
+
+.panel-card p {
+  color: var(--text-dim);
+}
+
+.editor-split {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.list-pane,
+.editor-pane {
+  min-height: 70svh;
+}
+
+.list-pane {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.list-pane-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.list-pane-header p {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.list-pane-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.item-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(182, 145, 106, 0.5) transparent;
+}
+
+.item-list::-webkit-scrollbar,
+.choice-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.item-list::-webkit-scrollbar-track,
+.choice-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.item-list::-webkit-scrollbar-thumb,
+.choice-list::-webkit-scrollbar-thumb {
+  background: rgba(182, 145, 106, 0.42);
+  border-radius: 999px;
+}
+
+.item-list::-webkit-scrollbar-thumb:hover,
+.choice-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(143, 53, 28, 0.34);
+}
+
+.item-list::-webkit-scrollbar-button,
+.choice-list::-webkit-scrollbar-button {
+  display: none;
+}
+
+.item-row {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(184, 145, 106, 0.22);
+  background: #fffaf4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item-row.is-active {
+  background: linear-gradient(135deg, rgba(184, 77, 47, 0.14), rgba(184, 77, 47, 0.04));
+  border-color: rgba(184, 77, 47, 0.38);
+}
+
+.item-row strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.item-row span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.editor-pane {
+  padding: 26px 28px;
+}
+
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.editor-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(31, 36, 48, 0.46);
+  z-index: 50;
+}
+
+.editor-modal__panel {
+  width: min(820px, 100%);
+  max-height: min(84svh, 920px);
+  overflow: auto;
+  padding: 28px;
+  border: 1px solid rgba(184, 145, 106, 0.24);
+  border-radius: 28px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.editor-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.editor-modal__header h2 {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+}
+
+.editor-modal__kicker {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.editor-modal__body {
+  display: grid;
+  gap: 18px;
+}
+
+.help-card {
+  padding: 20px 22px;
+  border: 1px solid rgba(184, 145, 106, 0.2);
+  border-radius: 18px;
+  background: #fffaf4;
+}
+
+.help-card h3 {
+  margin-bottom: 8px;
+}
+
+.help-card p {
+  margin: 0;
+}
+
+.help-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.help-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(184, 77, 47, 0.06);
+  border: 1px solid rgba(184, 145, 106, 0.18);
+}
+
+.help-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.section-heading p {
+  margin: 8px 0 0;
+}
+
+.section-heading-tight {
+  padding-top: 8px;
+  border-top: 1px solid rgba(184, 145, 106, 0.22);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field span {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.field-hint {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(184, 145, 106, 0.26);
+  background: #fffdf8;
+  color: var(--text);
+  padding: 12px 14px;
+  line-height: 1.5;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: rgba(184, 77, 47, 0.5);
+  box-shadow: 0 0 0 4px rgba(184, 77, 47, 0.08);
+  background: #fff;
+}
+
+.field input:disabled {
+  color: #7f766b;
+  background: #f1e9de;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 46svh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.choice-card {
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffaf3 0%, #fff6ec 100%);
+  border: 1px solid rgba(184, 145, 106, 0.24);
+}
+
+.choice-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.choice-card-header strong {
+  font-size: 1rem;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.choice-grid .field-full {
+  grid-column: 1 / -1;
+}
+
+.builder-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(184, 145, 106, 0.22);
+  background: rgba(255, 252, 247, 0.84);
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.builder-header strong {
+  font-size: 0.92rem;
+}
+
+.builder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.builder-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.builder-inline--triple {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) minmax(0, 1fr);
+}
+
+.builder-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.builder-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.builder-group-list,
+.effects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.builder-group-item,
+.effect-row {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 145, 106, 0.2);
+  background: #fffdf9;
+}
+
+.builder-group-item-header,
+.effect-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.builder-group-item-header strong,
+.effect-row-header strong {
+  font-size: 0.88rem;
+}
+
+.builder-raw,
+.effect-raw {
+  min-height: 120px;
+}
+
+@media (max-width: 1120px) {
+  .editor-split {
+    grid-template-columns: 1fr;
+  }
+
+  .list-pane,
+  .editor-pane {
+    min-height: auto;
+  }
+
+  .item-list {
+    max-height: 34svh;
+  }
+}
+
+@media (max-width: 840px) {
+  .editor-shell {
+    width: min(100% - 20px, 100%);
+    margin: 10px auto 28px;
+  }
+
+  .editor-header,
+  .editor-toolbar,
+  #tab-meta .panel-card,
+  .editor-pane,
+  .list-pane {
+    padding: 20px;
+  }
+
+  .editor-header,
+  .editor-toolbar,
+  .section-heading,
+  .list-pane-header {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .editor-actions,
+  .list-pane-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .editor-actions .btn,
+  .list-pane-actions .btn,
+  .section-heading .btn {
+    flex: 1;
+  }
+
+  .form-grid,
+  .choice-grid,
+  .editor-toolbar,
+  .builder-inline,
+  .builder-inline--triple {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-bar {
+    overflow: auto;
+    padding-bottom: 2px;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+  }
+
+  .editor-modal {
+    padding: 16px;
+  }
+
+  .editor-modal__header {
+    flex-direction: column;
+  }
+}
+  </style>
+  <!-- INLINE_EDITOR_STYLE_END -->
+</head>
+<body>
+  <div class="editor-shell">
+    <header class="editor-header">
+      <div>
+        <p class="editor-kicker">FINE Is Not an Engine <span id="editor-engine-version" class="editor-kicker-version"></span></p>
+        <h1 id="editor-title">FINE 엔진 에디터</h1>
+        <p class="editor-subtitle">"어떄요, 참 쉽죠?"</p>
+      </div>
+      <div class="editor-actions">
+        <button id="btn-help" class="btn btn-secondary" type="button">도움말</button>
+        <button id="btn-connect-file" class="btn btn-secondary" type="button">JS 업로드</button>
+        <button id="btn-reset-data" class="btn btn-secondary" type="button">초기화</button>
+        <button id="btn-export-game" class="btn btn-secondary" type="button">게임 내보내기</button>
+        <button id="btn-save-data" class="btn btn-primary" type="button">저장</button>
+      </div>
+    </header>
+
+    <section class="editor-toolbar">
+      <div id="editor-status" class="status-pill">준비됨</div>
+      <div id="editor-counts" class="editor-counts"></div>
+      <p class="editor-note">* JS 업로드: 원본 데이터를 불러옵니다.<br />* 저장: 원본 데이터를 경로에 저장합니다.<br />* 게임 내보내기: 실행 가능한 HTML 파일을 내보냅니다.</p>
+    </section>
+
+    <nav class="tab-bar" aria-label="에디터 탭">
+      <button class="tab-btn is-active" data-tab="meta" type="button">기본 정보</button>
+      <button class="tab-btn" data-tab="scenes" type="button">장면</button>
+      <button class="tab-btn" data-tab="endings" type="button">엔딩</button>
+    </nav>
+
+    <main class="editor-main">
+      <section id="tab-meta" class="tab-panel is-active">
+        <div class="panel-card">
+          <h2>기본 정보</h2>
+          <div class="form-grid">
+            <label class="field">
+              <span>게임 제목</span>
+              <input id="meta-title" type="text">
+            </label>
+            <label class="field">
+              <span>버전</span>
+              <input id="meta-version" type="number" min="1" step="1">
+            </label>
+            <label class="field">
+              <span>이름 포맷</span>
+              <select id="meta-name-format">
+                <option value="korean">korean</option>
+                <option value="japanese">japanese</option>
+                <option value="western">western</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>시작 장면</span>
+              <select id="meta-start-scene"></select>
+            </label>
+            <label class="field field-full">
+              <span>초기 소지품</span>
+              <textarea id="meta-inventory" rows="3" placeholder="쉼표 또는 줄바꿈으로 구분"></textarea>
+            </label>
+            <label class="field field-full">
+              <span>초기 플래그 JSON</span>
+              <textarea id="meta-flags" rows="8" spellcheck="false" placeholder='{"example": true}'></textarea>
+            </label>
+            <label class="field field-full">
+              <span>초기 스탯 JSON</span>
+              <textarea id="meta-stats" rows="8" spellcheck="false" placeholder='{"courage": 1}'></textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-scenes" class="tab-panel">
+        <div class="editor-split">
+          <aside class="list-pane panel-card">
+            <div class="list-pane-header">
+              <div>
+                <h2>장면 목록</h2>
+                <p>장면을 선택해 본문과 선택지를 편집합니다.</p>
+              </div>
+              <div class="list-pane-actions">
+                <button id="btn-add-scene" class="btn btn-secondary" type="button">추가</button>
+                <button id="btn-delete-scene" class="btn btn-danger" type="button">삭제</button>
+              </div>
+            </div>
+            <div id="scene-list" class="item-list" role="listbox" aria-label="장면 목록"></div>
+          </aside>
+
+          <section class="panel-card editor-pane">
+            <form id="scene-form" class="editor-form">
+              <div class="section-heading">
+                <div>
+                  <h2>장면 편집</h2>
+                  <p id="scene-form-caption">장면을 선택하세요.</p>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>장면 ID</span>
+                  <input id="scene-id" type="text">
+                  <small class="field-hint">저장하거나 다른 장면으로 이동할 때 참조가 자동으로 함께 갱신됩니다.</small>
+                </label>
+                <label class="field">
+                  <span>엔딩 연결</span>
+                  <select id="scene-ending"></select>
+                </label>
+                <label class="field field-full">
+                  <span>제목</span>
+                  <input id="scene-title" type="text">
+                </label>
+                <label class="field field-full">
+                  <span>본문</span>
+                  <textarea id="scene-text" rows="14" spellcheck="false"></textarea>
+                </label>
+                <label class="field field-full">
+                  <span>onEnter JSON</span>
+                  <textarea id="scene-on-enter" rows="6" spellcheck="false" placeholder='{"setFlag": "example"}'></textarea>
+                </label>
+                <label class="field">
+                  <span>autoNext</span>
+                  <input id="scene-auto-next" type="text" list="scene-reference-list">
+                </label>
+                <label class="field">
+                  <span>autoDelay(ms)</span>
+                  <input id="scene-auto-delay" type="number" min="0" step="100">
+                </label>
+              </div>
+
+              <div class="section-heading section-heading-tight">
+                <div>
+                  <h3>선택지</h3>
+                  <p>각 선택지의 텍스트, 다음 장면, 조건과 효과를 폼으로 편집합니다.</p>
+                </div>
+                <button id="btn-add-choice" class="btn btn-secondary" type="button">선택지 추가</button>
+              </div>
+
+              <div id="scene-choices" class="choice-list"></div>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section id="tab-endings" class="tab-panel">
+        <div class="editor-split">
+          <aside class="list-pane panel-card">
+            <div class="list-pane-header">
+              <div>
+                <h2>엔딩 목록</h2>
+                <p>엔딩 제목과 설명을 수정하거나 새로 추가합니다.</p>
+              </div>
+              <div class="list-pane-actions">
+                <button id="btn-add-ending" class="btn btn-secondary" type="button">추가</button>
+                <button id="btn-delete-ending" class="btn btn-danger" type="button">삭제</button>
+              </div>
+            </div>
+            <div id="ending-list" class="item-list" role="listbox" aria-label="엔딩 목록"></div>
+          </aside>
+
+          <section class="panel-card editor-pane">
+            <form id="ending-form" class="editor-form">
+              <div class="section-heading">
+                <div>
+                  <h2>엔딩 편집</h2>
+                  <p id="ending-form-caption">엔딩을 선택하세요.</p>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>엔딩 ID</span>
+                  <input id="ending-id" type="text">
+                  <small class="field-hint">저장하거나 다른 엔딩으로 이동할 때 연결된 장면 참조가 자동으로 함께 갱신됩니다.</small>
+                </label>
+                <label class="field field-full">
+                  <span>제목</span>
+                  <input id="ending-title" type="text">
+                </label>
+                <label class="field field-full">
+                  <span>설명</span>
+                  <textarea id="ending-description" rows="12" spellcheck="false"></textarea>
+                </label>
+              </div>
+            </form>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <datalist id="scene-reference-list"></datalist>
+    <input id="input-import-data" type="file" accept=".js,text/javascript" class="hidden" aria-hidden="true">
+  </div>
+
+  <div id="help-overlay" class="editor-modal hidden" aria-hidden="true">
+    <div class="editor-modal__panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="editor-modal__header">
+        <div>
+          <p class="editor-modal__kicker">FINE 도움말</p>
+          <h2 id="help-title">조사 지시어 안내</h2>
+        </div>
+        <button id="btn-close-help" class="btn btn-secondary" type="button">닫기</button>
+      </div>
+      <div id="help-body" class="editor-modal__body"></div>
+    </div>
+  </div>
+
+  <!-- INLINE_EDITOR_SCRIPTS_START -->
+  <script>
+/* editor-export-assets.js — export용 내장 자산 스냅샷
+  index.html, styles.css, js/engine.js, js/app.js가 바뀌면 이 파일도 함께 갱신해야 합니다.
+*/
+window.FINE_EMBEDDED_EXPORT_ASSETS = {
+  indexHtml: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기숙사에서 살아남기</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="game-container">
+    <header id="game-header">
+      <h1>기숙사에서 살아남기</h1>
+      <div id="header-buttons">
+        <button id="btn-back" title="뒤로" aria-label="뒤로" disabled><span class="btn-icon" aria-hidden="true">↩</span><span class="btn-label">뒤로</span></button>
+        <button id="btn-storymap" title="스토리맵" aria-label="스토리맵"><span class="btn-icon" aria-hidden="true">🗺️</span><span class="btn-label">스토리맵</span></button>
+        <button id="btn-save" title="저장" aria-label="저장"><span class="btn-icon" aria-hidden="true">💾</span><span class="btn-label">저장</span></button>
+        <button id="btn-load" title="불러오기" aria-label="불러오기"><span class="btn-icon" aria-hidden="true">📂</span><span class="btn-label">불러오기</span></button>
+        <button id="btn-restart" title="처음부터" aria-label="처음부터"><span class="btn-icon" aria-hidden="true">🔄</span><span class="btn-label">처음부터</span></button>
+      </div>
+    </header>
+
+    <main id="story-panel">
+      <div id="story-text"></div>
+      <nav id="choices-panel"></nav>
+    </main>
+
+    <footer id="game-footer">
+      <span id="status-bar"></span>
+      <span id="engine-version"></span>
+    </footer>
+  </div>
+
+  <div id="overlay" class="hidden">
+    <div id="modal">
+      <p id="modal-message"></p>
+      <div id="modal-buttons"></div>
+    </div>
+  </div>
+
+  <script src="js/engine.js"><\/script>
+  <script src="js/game-data.js"><\/script>
+  <script src="js/app.js"><\/script>
+</body>
+</html>
+`,
+  stylesCss: `/* =========================================================
+   기숙사 방의 축소인간 — UI Theme
+   ========================================================= */
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #1a1a2e;
+  --panel-bg:  #16213e;
+  --card-bg:   #0f3460;
+  --accent:    #e94560;
+  --text:      #eaeaea;
+  --text-dim:  #8892a4;
+  --btn-bg:    #0f3460;
+  --btn-hover: #e94560;
+  --border:    #233554;
+  --font-body: 'Pretendard', 'Noto Sans KR', sans-serif;
+  --font-story: 'Nanum Myeongjo', 'Batang', serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* ---------- Layout ---------- */
+#game-container {
+  max-width: 760px;
+  margin: 0 auto;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Header ---------- */
+#game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#game-header h1 {
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  flex: 1;
+  min-width: 0;
+}
+
+#header-buttons {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#header-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--btn-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: background 0.2s;
+}
+
+#header-buttons button:hover {
+  background: var(--btn-hover);
+}
+
+.btn-icon {
+  line-height: 1;
+}
+
+.btn-label {
+  line-height: 1.2;
+}
+
+/* ---------- Story Panel ---------- */
+#story-panel {
+  flex: 1;
+  padding: 28px 22px 18px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#story-panel::-webkit-scrollbar {
+  width: 5px;
+}
+#story-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+#story-panel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+#story-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+#story-panel::-webkit-scrollbar-button {
+  display: none;
+}
+
+#story-text {
+  font-family: var(--font-story);
+  font-size: 1.05rem;
+  line-height: 1.9;
+  white-space: pre-line;
+  margin-bottom: 22px;
+}
+
+#story-text .scene-title {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+#story-text .flavor {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ---------- Choices ---------- */
+#choices-panel {
+  padding: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 18px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+#choices-panel.choices-panel--empty {
+  display: none;
+}
+
+#choices-panel.choices-panel--active {
+  border-top-color: var(--accent);
+  box-shadow: 0 -12px 28px rgba(233, 69, 96, 0.12);
+}
+
+.choices-prompt {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+#choices-panel button {
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 13px 18px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.97rem;
+  font-family: var(--font-body);
+  line-height: 1.5;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#choices-panel button:hover {
+  background: var(--btn-hover);
+  border-color: var(--accent);
+}
+
+#choices-panel button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Footer / Status ---------- */
+#game-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 22px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+
+#status-bar {
+  flex: 1 1 220px;
+}
+
+#engine-version {
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+/* ---------- Modal / Overlay ---------- */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+#overlay.hidden { display: none; }
+
+#modal {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  max-width: 400px;
+  max-height: 85svh;
+  overflow-y: auto;
+  text-align: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#modal::-webkit-scrollbar { width: 5px; }
+#modal::-webkit-scrollbar-track { background: transparent; }
+#modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#modal::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+#modal::-webkit-scrollbar-button { display: none; }
+
+#modal-message {
+  margin-bottom: 18px;
+  line-height: 1.7;
+}
+
+#modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#modal-buttons button {
+  padding: 8px 22px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#modal-buttons button:hover { background: var(--btn-hover); }
+
+.name-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.name-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  text-align: center;
+  outline: none;
+  min-width: 0;
+}
+.name-input--short { flex: 0.6; }
+.name-input:focus { border-color: var(--accent); }
+
+/* ---------- Slot UI ---------- */
+.slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-height: 50svh;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.slot-list::-webkit-scrollbar { width: 5px; }
+.slot-list::-webkit-scrollbar-track { background: transparent; }
+.slot-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.slot-list::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+.slot-list::-webkit-scrollbar-button { display: none; }
+.slot-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+.slot-row:hover:not(:disabled) { background: var(--btn-hover); }
+.slot-row:disabled, .slot-row.slot-empty {
+  opacity: 0.45;
+  cursor: default;
+}
+.slot-auto {
+  border-color: var(--accent);
+  border-width: 1px;
+}
+.slot-auto-tag {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.slot-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.slot-date {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Ending Screen ---------- */
+.ending-banner {
+  text-align: center;
+  padding: 30px 0 10px;
+}
+.ending-banner .ending-label {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  padding: 4px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+.ending-banner .ending-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+/* ---------- Transition animation ---------- */
+.fade-in {
+  animation: fadeIn 0.45s ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Header button disabled ---------- */
+#header-buttons button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+#header-buttons button:disabled:hover {
+  background: var(--btn-bg);
+}
+
+/* ---------- Slot Delete & Reset ---------- */
+.slot-row { position: relative; }
+.slot-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 8px;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+.slot-delete:hover { opacity: 1; }
+.slot-reset-all {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #5a2020;
+  background: #3a1515;
+  color: #e94560;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+.slot-reset-all:hover { background: #5a2020; }
+
+/* ---------- Story Map ---------- */
+.story-map {
+  width: 100%;
+  max-height: 50svh;
+  overflow-y: auto;
+  padding: 8px 0;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.story-map::-webkit-scrollbar { width: 5px; }
+.story-map::-webkit-scrollbar-track { background: transparent; }
+.story-map::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.story-map::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+.story-map::-webkit-scrollbar-button { display: none; }
+.story-map-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  position: relative;
+}
+.story-map-node:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 26px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--border);
+}
+.story-map-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.story-map-current .story-map-dot {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.story-map-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+.story-map-current .story-map-label {
+  color: var(--text);
+  font-weight: 600;
+}
+.story-map-node:not(.story-map-current):hover .story-map-label {
+  color: var(--accent);
+}
+.story-map-node:not(.story-map-current):hover .story-map-dot {
+  background: var(--accent);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  #game-container { max-width: 100%; }
+  #game-header { padding: 12px 14px; }
+  #game-header h1 {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #header-buttons { gap: 4px; }
+  #header-buttons button {
+    min-width: 36px;
+    padding: 6px 8px;
+    gap: 0;
+  }
+  #header-buttons .btn-label { display: none; }
+  #story-panel   { padding: 18px 14px 12px; }
+  #choices-panel {
+    padding: 14px 0 18px;
+    margin-top: 6px;
+  }
+}
+`,
+  engineJs: `/* =========================================================
+   engine.js — 범용 텍스트 어드벤처 엔진
+   ---------------------------------------------------------
+   이 파일은 게임 '데이터'와 완전히 분리된 순수 엔진입니다.
+   game-data.js 에서 GAME_DATA 객체만 바꾸면 전혀 다른 게임을
+   돌릴 수 있습니다.
+   ========================================================= */
+
+const Engine = (() => {
+  "use strict";
+
+  /* =====================================================
+     1. 내부 상태
+     ===================================================== */
+  let _data      = null;   // GAME_DATA 참조
+  let _state     = {};     // 현재 플레이 상태
+  let _history   = [];     // 선택 히스토리 (undo 용도 예약)
+  let _onRender  = null;   // UI 렌더 콜백
+
+  /* =====================================================
+     2. 초기화
+     ===================================================== */
+  /**
+   * @param {object}   gameData  - GAME_DATA 객체
+   * @param {function} renderCb  - (sceneObj, state) => void
+   */
+  function init(gameData, renderCb, nameNeededCb) {
+    _data          = gameData;
+    _onRender      = renderCb;
+    _onNameNeeded  = nameNeededCb || null;
+    _state         = _freshState();
+    _history       = [];
+  }
+
+  function _getNameFormat() {
+    const format = _data?.nameFormat;
+    return ["korean", "japanese", "western"].includes(format) ? format : "korean";
+  }
+
+  function _getFullName() {
+    const familyName = _state.familyName || "";
+    const givenName = _state.givenName || "";
+    const format = _getNameFormat();
+
+    if (format === "japanese") {
+      return [familyName, givenName].filter(Boolean).join(" ");
+    }
+    if (format === "western") {
+      return [givenName, familyName].filter(Boolean).join(" ");
+    }
+    return \`\${familyName}\${givenName}\`;
+  }
+
+  function setPlayerName(familyName, givenName) {
+    _state.familyName = familyName;
+    _state.givenName = givenName;
+    _state.playerName = givenName;
+    _renderCurrent();
+  }
+
+  function _freshState() {
+    return {
+      currentScene : _data.startScene,
+      flags        : Object.assign({}, _data.initialFlags || {}),
+      inventory    : [].concat(_data.initialInventory || []),
+      stats        : Object.assign({}, _data.initialStats || {}),
+      visitedScenes: [_data.startScene],
+      choicesMade  : 0,
+      ended        : false,
+      endingId     : null,
+      playerName   : null,
+      familyName   : null,
+      givenName    : null,
+    };
+  }
+
+  /* =====================================================
+     2-b. 플레이어 이름 & 한국어 조사 처리
+     ===================================================== */
+  let _onNameNeeded = null;
+
+  function _hasBatchim(str) {
+    if (!str || str.length === 0) return false;
+    const code = str.charCodeAt(str.length - 1);
+    if (code >= 0xAC00 && code <= 0xD7A3) return (code - 0xAC00) % 28 !== 0;
+    return !'aeiouAEIOU'.includes(str[str.length - 1]);
+  }
+
+  function _substituteText(text) {
+    if (!text || !_state.playerName) return text;
+    const n = _state.playerName;
+    const f = _getFullName();
+    const b = _hasBatchim(n);
+    const bf = _hasBatchim(f);
+    return text
+      .replace(/\\{fullname_s\\}/g, f[0] + "\\u2026 " + f)
+      .replace(/\\{fullname\\uAC00\\}/g, f + (bf ? "\\uC774" : "\\uAC00"))
+      .replace(/\\{fullname\\uC774\\}/g, f + (bf ? "\\uC774" : ""))
+      .replace(/\\{fullname\\uC57C\\}/g, f + (bf ? "\\uC544" : "\\uC57C"))
+      .replace(/\\{fullname\\uC744\\}/g, f + (bf ? "\\uC744" : "\\uB97C"))
+      .replace(/\\{fullname\\uC740\\}/g, f + (bf ? "\\uC740" : "\\uB294"))
+      .replace(/\\{fullname\\uACFC\\}/g, f + (bf ? "\\uACFC" : "\\uC640"))
+      .replace(/\\{fullname\\}/g, f)
+      .replace(/\\{name_s\\}/g, n[0] + "\\u2026 " + n)
+      .replace(/\\{name\\uAC00\\}/g, n + (b ? "\\uC774" : "\\uAC00"))
+      .replace(/\\{name\\uC774\\}/g, n + (b ? "\\uC774" : ""))
+      .replace(/\\{name\\uC57C\\}/g, n + (b ? "\\uC544" : "\\uC57C"))
+      .replace(/\\{name\\uC744\\}/g, n + (b ? "\\uC744" : "\\uB97C"))
+      .replace(/\\{name\\uC740\\}/g, n + (b ? "\\uC740" : "\\uB294"))
+      .replace(/\\{name\\uACFC\\}/g, n + (b ? "\\uACFC" : "\\uC640"))
+      .replace(/\\{name\\}/g, n);
+  }
+
+  function _maybeRender() {
+    if (!_state.playerName && _onNameNeeded) {
+      _onNameNeeded();
+    } else {
+      _renderCurrent();
+    }
+  }
+
+  /* =====================================================
+     3. 장면(Scene) 조회
+     ===================================================== */
+  function _scene(id) {
+    const s = _data.scenes[id];
+    if (!s) throw new Error(\`[Engine] Scene not found: "\${id}"\`);
+    return s;
+  }
+
+  /* =====================================================
+     4. 조건 평가 (Condition)
+     -------------------------------------------------
+     조건 객체 예시:
+       { flag: "hasKey" }                 → flags.hasKey === true
+       { flag: "!hasKey" }                → flags.hasKey !== true
+       { item: "열쇠" }                   → inventory 에 "열쇠" 포함
+       { item: "!열쇠" }                  → inventory 에 "열쇠" 없음
+       { stat: "courage", gte: 3 }        → stats.courage >= 3
+       { stat: "courage", lt: 2 }         → stats.courage < 2
+       { visited: "sceneId" }             → visitedScenes 에 포함
+       { visited: "!sceneId" }            → visitedScenes 에 미포함
+       { or: [ cond1, cond2 ] }           → 하나라도 참
+       { and: [ cond1, cond2 ] }          → 모두 참
+     ===================================================== */
+  function _evalCond(cond) {
+    if (!cond) return true;
+    if (Array.isArray(cond)) return cond.every(c => _evalCond(c));
+
+    if (cond.or)  return cond.or.some(c => _evalCond(c));
+    if (cond.and) return cond.and.every(c => _evalCond(c));
+
+    if (cond.flag) {
+      if (cond.flag.startsWith("!"))
+        return !_state.flags[cond.flag.slice(1)];
+      return !!_state.flags[cond.flag];
+    }
+    if (cond.item) {
+      if (cond.item.startsWith("!"))
+        return !_state.inventory.includes(cond.item.slice(1));
+      return _state.inventory.includes(cond.item);
+    }
+    if (cond.stat) {
+      const v = _state.stats[cond.stat] || 0;
+      if (cond.gte !== undefined) return v >= cond.gte;
+      if (cond.gt  !== undefined) return v >  cond.gt;
+      if (cond.lte !== undefined) return v <= cond.lte;
+      if (cond.lt  !== undefined) return v <  cond.lt;
+      if (cond.eq  !== undefined) return v === cond.eq;
+    }
+    if (cond.visited) {
+      if (cond.visited.startsWith("!"))
+        return !_state.visitedScenes.includes(cond.visited.slice(1));
+      return _state.visitedScenes.includes(cond.visited);
+    }
+    return true;
+  }
+
+  /* =====================================================
+     5. 효과 적용 (Effects)
+     -------------------------------------------------
+     효과 객체 예시:
+       { setFlag: "hasKey" }
+       { clearFlag: "hasKey" }
+       { addItem: "열쇠" }
+       { removeItem: "열쇠" }
+       { addStat: "courage", value: 1 }
+       { setStat: "courage", value: 5 }
+     ===================================================== */
+  function _applyEffects(effects) {
+    if (!effects) return;
+    const arr = Array.isArray(effects) ? effects : [effects];
+    arr.forEach(e => {
+      if (e.setFlag)    _state.flags[e.setFlag] = true;
+      if (e.clearFlag)  delete _state.flags[e.clearFlag];
+      if (e.addItem && !_state.inventory.includes(e.addItem))
+        _state.inventory.push(e.addItem);
+      if (e.removeItem) {
+        const idx = _state.inventory.indexOf(e.removeItem);
+        if (idx !== -1) _state.inventory.splice(idx, 1);
+      }
+      if (e.addStat) {
+        _state.stats[e.addStat] = (_state.stats[e.addStat] || 0) + (e.value ?? 1);
+      }
+      if (e.setStat) {
+        _state.stats[e.setStat] = e.value ?? 0;
+      }
+    });
+  }
+
+  /* =====================================================
+     6. 선택지(Choice) 선택
+     ===================================================== */
+  function choose(choiceIndex) {
+    if (_state.ended) return;
+
+    const scene   = _scene(_state.currentScene);
+    const visible = _visibleChoices(scene);
+    const choice  = visible[choiceIndex];
+    if (!choice) return;
+
+    // 히스토리 기록
+    _history.push({
+      scene : _state.currentScene,
+      choice: choiceIndex,
+      snapshot: JSON.parse(JSON.stringify(_state)),
+    });
+
+    // 효과 적용
+    _applyEffects(choice.effects);
+    _state.choicesMade++;
+
+    // 다음 장면
+    const nextId = typeof choice.next === "function"
+      ? choice.next(_state)
+      : choice.next;
+
+    _goToScene(nextId);
+  }
+
+  /* =====================================================
+     7. 장면 이동
+     ===================================================== */
+  function _goToScene(sceneId) {
+    const scene = _scene(sceneId);
+    _state.currentScene = sceneId;
+
+    if (!_state.visitedScenes.includes(sceneId))
+      _state.visitedScenes.push(sceneId);
+
+    // 장면 진입 효과
+    _applyEffects(scene.onEnter);
+
+    // 엔딩 체크
+    if (scene.ending) {
+      _state.ended    = true;
+      _state.endingId = scene.ending;
+    }
+
+    // 자동 이동 (선택지가 없고 autoNext 가 있을 때)
+    if (scene.autoNext && !scene.ending) {
+      _renderCurrent();
+      autoSave();
+      setTimeout(() => _goToScene(scene.autoNext), scene.autoDelay || 1500);
+      return;
+    }
+
+    _renderCurrent();
+    autoSave();
+  }
+
+  /* =====================================================
+     8. 보이는 선택지 필터링
+     ===================================================== */
+  function _visibleChoices(scene) {
+    if (!scene.choices) return [];
+    return scene.choices.filter(c => _evalCond(c.condition));
+  }
+
+  /* =====================================================
+     9. 렌더 호출
+     ===================================================== */
+  function _renderCurrent() {
+    const scene = _scene(_state.currentScene);
+    // 텍스트가 함수이면 동적 생성 허용
+    const text = typeof scene.text === "function"
+      ? scene.text(_state)
+      : scene.text;
+
+    const ending = scene.ending
+      ? (_data.endings[scene.ending] || { id: scene.ending })
+      : null;
+    if (ending) {
+      ending.title       = _substituteText(ending.title || "");
+      ending.description = _substituteText(ending.description || "");
+    }
+
+    const payload = {
+      id      : _state.currentScene,
+      title   : _substituteText(scene.title || ""),
+      text    : _substituteText(text),
+      choices : _visibleChoices(scene).map((c, i) => ({
+        index : i,
+        label : _substituteText(typeof c.label === "function" ? c.label(_state) : c.label),
+        disabled: c.disabled ? _evalCond(c.disabled) : false,
+        tooltip : c.tooltip || "",
+      })),
+      ending  : ending,
+      state   : Object.freeze(JSON.parse(JSON.stringify(_state))),
+    };
+    if (_onRender) _onRender(payload);
+  }
+
+  /* =====================================================
+     10. 저장 / 불러오기
+     ===================================================== */
+  const STORAGE_PREFIX = "dorm_shrink";
+  const MAX_SLOTS = 5;
+
+  function _storageScope() {
+    return \`\${STORAGE_PREFIX}:\${_data?.title || "untitled"}\`;
+  }
+
+  function _slotKey(slot) {
+    return \`\${_storageScope()}:save:\${slot}\`;
+  }
+
+  function _autoSaveKey() {
+    return \`\${_storageScope()}:autosave\`;
+  }
+
+  function _makeSaveData() {
+    const scene = _data.scenes[_state.currentScene];
+    return {
+      gameTitle : _data.title || "",
+      version   : _data.version || 1,
+      state     : _state,
+      history   : _history,
+      ts        : Date.now(),
+      sceneTitle: scene ? scene.title || "" : "",
+    };
+  }
+
+  function save(slot) {
+    const key  = _slotKey(slot);
+    const data = _makeSaveData();
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function load(slot) {
+    const key  = _slotKey(slot);
+    const raw  = localStorage.getItem(key);
+    if (!raw) return false;
+    try {
+      const data = JSON.parse(raw);
+      _state   = data.state;
+      _history = data.history || [];
+      _maybeRender();
+      return true;
+    } catch { return false; }
+  }
+
+  function hasSave(slot) {
+    if (slot !== undefined) {
+      return !!localStorage.getItem(_slotKey(slot));
+    }
+    if (localStorage.getItem(_autoSaveKey())) return true;
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      if (localStorage.getItem(_slotKey(i))) return true;
+    }
+    return false;
+  }
+
+  function deleteSave(slot) {
+    localStorage.removeItem(_slotKey(slot));
+  }
+
+  function listSaves() {
+    const list = [];
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      const raw = localStorage.getItem(_slotKey(i));
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          list.push({
+            slot: i,
+            ts: data.ts,
+            sceneTitle: data.sceneTitle || "",
+          });
+        } catch {
+          list.push({ slot: i, ts: 0, sceneTitle: "(손상된 데이터)" });
+        }
+      } else {
+        list.push({ slot: i, ts: 0, sceneTitle: "" });
+      }
+    }
+    return list;
+  }
+
+  /* =====================================================
+     11. 유틸 — 외부 접근용
+     ===================================================== */
+  function getState()   { return JSON.parse(JSON.stringify(_state)); }
+  function getHistory() { return JSON.parse(JSON.stringify(_history)); }
+
+  function restart() {
+    _state   = _freshState();
+    _history = [];
+    _maybeRender();
+  }
+
+  function startNewGame() {
+    _state   = _freshState();
+    _history = [];
+    _maybeRender();
+  }
+
+  function deleteAllSaves() {
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      localStorage.removeItem(_slotKey(i));
+    }
+    localStorage.removeItem(_autoSaveKey());
+  }
+
+  function goBack() {
+    if (_history.length === 0) return false;
+    const entry = _history.pop();
+    _state = entry.snapshot;
+    _renderCurrent();
+    return true;
+  }
+
+  function canGoBack() {
+    return _history.length > 0;
+  }
+
+  function getScenePath() {
+    const path = _history.map((h, i) => ({
+      sceneId: h.scene,
+      title: _substituteText(_data.scenes[h.scene]?.title || h.scene),
+      historyIndex: i,
+    }));
+    path.push({
+      sceneId: _state.currentScene,
+      title: _substituteText(
+        _data.scenes[_state.currentScene]?.title || _state.currentScene
+      ),
+      current: true,
+      historyIndex: _history.length,
+    });
+    return path;
+  }
+
+  function goToHistoryIndex(index) {
+    if (index < 0 || index >= _history.length) return false;
+    const entry = _history[index];
+    _history = _history.slice(0, index);
+    _state = entry.snapshot;
+    _renderCurrent();
+    return true;
+  }
+
+  /* =====================================================
+     자동 저장
+     ===================================================== */
+  function autoSave() {
+    if (!_state.playerName) return;
+    const data = _makeSaveData();
+    localStorage.setItem(_autoSaveKey(), JSON.stringify(data));
+  }
+
+  function loadAutoSave() {
+    const raw = localStorage.getItem(_autoSaveKey());
+    if (!raw) return false;
+    try {
+      const data = JSON.parse(raw);
+      _state   = data.state;
+      _history = data.history || [];
+      _maybeRender();
+      return true;
+    } catch { return false; }
+  }
+
+  function hasAutoSave() {
+    return !!localStorage.getItem(_autoSaveKey());
+  }
+
+  function getAutoSave() {
+    const raw = localStorage.getItem(_autoSaveKey());
+    if (!raw) return null;
+    try {
+      const data = JSON.parse(raw);
+      return { ts: data.ts, sceneTitle: data.sceneTitle || "" };
+    } catch { return null; }
+  }
+
+  function deleteAutoSave() {
+    localStorage.removeItem(_autoSaveKey());
+  }
+
+  /* =====================================================
+     PUBLIC API
+     ===================================================== */
+  return {
+    init,
+    choose,
+    save,
+    load,
+    hasSave,
+    deleteSave,
+    deleteAllSaves,
+    listSaves,
+    autoSave,
+    loadAutoSave,
+    hasAutoSave,
+    getAutoSave,
+    deleteAutoSave,
+    restart,
+    startNewGame,
+    getState,
+    getHistory,
+    setPlayerName,
+    goBack,
+    canGoBack,
+    getScenePath,
+    goToHistoryIndex,
+  };
+})();
+`,
+  appJs: `/* =========================================================
+   app.js — UI 바인딩 & 부트스트래퍼
+   ========================================================= */
+(() => {
+  "use strict";
+
+  const FINE_ENGINE_VERSION = "0.1.0";
+
+  /* ─── DOM 요소 ─── */
+  const $storyPanel  = document.getElementById("story-panel");
+  const $storyText   = document.getElementById("story-text");
+  const $choicesPanel = document.getElementById("choices-panel");
+  const $statusBar    = document.getElementById("status-bar");
+  const $engineVersion = document.getElementById("engine-version");
+  const $btnBack      = document.getElementById("btn-back");
+  const $btnStorymap  = document.getElementById("btn-storymap");
+  const $btnSave      = document.getElementById("btn-save");
+  const $btnLoad      = document.getElementById("btn-load");
+  const $btnRestart   = document.getElementById("btn-restart");
+  const $overlay      = document.getElementById("overlay");
+  const $modalMsg     = document.getElementById("modal-message");
+  const $modalBtns    = document.getElementById("modal-buttons");
+
+  function updateChoiceFocusState() {
+    if ($choicesPanel.classList.contains("choices-panel--empty")) {
+      $choicesPanel.classList.remove("choices-panel--active");
+      return;
+    }
+
+    const panelRect = $storyPanel.getBoundingClientRect();
+    const choicesRect = $choicesPanel.getBoundingClientRect();
+    const hasReachedChoices = choicesRect.top <= panelRect.bottom - 48;
+    $choicesPanel.classList.toggle("choices-panel--active", hasReachedChoices);
+  }
+
+  /* ─── 렌더 콜백 ─── */
+  function render(payload) {
+    // 스토리 텍스트
+    let html = "";
+    if (payload.title) {
+      html += \`<span class="scene-title">\${esc(payload.title)}</span>\`;
+    }
+    html += esc(payload.text);
+
+    // 엔딩
+    if (payload.ending) {
+      html += \`
+        <div class="ending-banner">
+          <span class="ending-label">엔딩</span>
+          <div class="ending-title">\${esc(payload.ending.title)}</div>
+          <p style="margin-top:12px;color:var(--text-dim)">\${esc(payload.ending.description)}</p>
+        </div>\`;
+    }
+
+    $storyText.innerHTML = html;
+    $storyText.classList.remove("fade-in");
+    void $storyText.offsetWidth;          // reflow trick
+    $storyText.classList.add("fade-in");
+
+    // 선택지
+    $choicesPanel.innerHTML = "";
+    if (payload.choices.length > 0) {
+      $choicesPanel.classList.remove("choices-panel--empty");
+
+      const prompt = document.createElement("div");
+      prompt.className = "choices-prompt";
+      prompt.textContent = "계속하려면 아래 선택지 중 하나를 고르세요.";
+      $choicesPanel.appendChild(prompt);
+
+      payload.choices.forEach(c => {
+        const btn = document.createElement("button");
+        btn.textContent = c.label;
+        btn.disabled = c.disabled;
+        if (c.tooltip) btn.title = c.tooltip;
+        btn.addEventListener("click", () => Engine.choose(c.index));
+        $choicesPanel.appendChild(btn);
+      });
+    } else {
+      $choicesPanel.classList.add("choices-panel--empty");
+      $choicesPanel.classList.remove("choices-panel--active");
+    }
+
+    // 상태 바
+    const s = payload.state;
+    const parts = [];
+    if (s.inventory.length) parts.push(\`소지품: \${s.inventory.join(", ")}\`);
+    $statusBar.textContent = parts.join("  |  ");
+
+    // 뒤로 가기 버튼 상태
+    $btnBack.disabled = !Engine.canGoBack();
+
+    // 스크롤 맨 위
+    requestAnimationFrame(() => {
+      $storyPanel.scrollTop = 0;
+      window.scrollTo(0, 0);
+      updateChoiceFocusState();
+    });
+  }
+
+  /* ─── 모달 헬퍼 ─── */
+  function showModal(message, buttons) {
+    $modalMsg.textContent = message;
+    $modalBtns.innerHTML = "";
+    buttons.forEach(b => {
+      const btn = document.createElement("button");
+      btn.textContent = b.label;
+      btn.addEventListener("click", () => {
+        $overlay.classList.add("hidden");
+        if (b.action) b.action();
+      });
+      $modalBtns.appendChild(btn);
+    });
+    $overlay.classList.remove("hidden");
+  }
+
+  /* ─── 이스케이프 ─── */
+  function esc(str) {
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  /* ─── 이름 입력 화면 ─── */
+  function showNameInput() {
+    const nameFormat = ["korean", "japanese", "western"].includes(GAME_DATA.nameFormat)
+      ? GAME_DATA.nameFormat
+      : "korean";
+    const familyNameMaxLength = nameFormat === "western" ? 20 : 4;
+    const givenNameMaxLength = nameFormat === "western" ? 20 : 10;
+
+    $modalMsg.textContent = "당신의 이름을 알려주세요.";
+    $modalBtns.innerHTML = "";
+
+    const famInput = document.createElement("input");
+    famInput.type = "text";
+    famInput.placeholder = nameFormat === "western" ? "성(last name)" : "성";
+    famInput.maxLength = familyNameMaxLength;
+    famInput.className = "name-input name-input--short";
+
+    const givenInput = document.createElement("input");
+    givenInput.type = "text";
+    givenInput.placeholder = nameFormat === "western" ? "이름(first name)" : "이름";
+    givenInput.maxLength = givenNameMaxLength;
+    givenInput.className = "name-input";
+
+    const btn = document.createElement("button");
+    btn.textContent = "시작";
+    const submit = () => {
+      const fam = famInput.value.trim();
+      const given = givenInput.value.trim();
+      if (!fam) { famInput.focus(); return; }
+      if (!given) { givenInput.focus(); return; }
+      $overlay.classList.add("hidden");
+      Engine.setPlayerName(fam, given);
+    };
+    btn.addEventListener("click", submit);
+    givenInput.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+    famInput.addEventListener("keydown", e => { if (e.key === "Enter") givenInput.focus(); });
+
+    const row = document.createElement("div");
+    row.className = "name-row";
+    if (nameFormat === "western") {
+      row.appendChild(givenInput);
+      row.appendChild(famInput);
+      givenInput.addEventListener("keydown", e => { if (e.key === "Enter") famInput.focus(); });
+      setTimeout(() => givenInput.focus(), 50);
+    } else {
+      row.appendChild(famInput);
+      row.appendChild(givenInput);
+      setTimeout(() => famInput.focus(), 50);
+    }
+    $modalBtns.appendChild(row);
+    $modalBtns.appendChild(btn);
+    $overlay.classList.remove("hidden");
+  }
+
+  /* ─── 슬롯 선택 UI (저장/불러오기 공용) ─── */
+  function showSlotUI(mode) {
+    // mode: "save" | "load"
+    const saves = Engine.listSaves();
+    $modalMsg.textContent = mode === "save" ? "저장할 슬롯을 선택하세요." : "불러올 슬롯을 선택하세요.";
+    $modalBtns.innerHTML = "";
+
+    const list = document.createElement("div");
+    list.className = "slot-list";
+
+    // 자동 저장 슬롯 (불러오기 모드에서만)
+    if (mode === "load") {
+      const autoInfo = Engine.getAutoSave();
+      const autoRow = document.createElement("button");
+      autoRow.className = "slot-row slot-auto";
+      const autoInfoDiv = document.createElement("div");
+      autoInfoDiv.className = "slot-info";
+      const autoTag = document.createElement("span");
+      autoTag.className = "slot-auto-tag";
+      autoTag.textContent = "자동 저장";
+      autoInfoDiv.appendChild(autoTag);
+      if (autoInfo) {
+        const autoTitle = document.createElement("span");
+        autoTitle.className = "slot-title";
+        autoTitle.textContent = autoInfo.sceneTitle || "(제목 없음)";
+        autoInfoDiv.appendChild(autoTitle);
+        const autoDate = document.createElement("span");
+        autoDate.className = "slot-date";
+        autoDate.textContent = new Date(autoInfo.ts).toLocaleString("ko-KR");
+        autoInfoDiv.appendChild(autoDate);
+        autoRow.appendChild(autoInfoDiv);
+        autoRow.addEventListener("click", () => {
+          $overlay.classList.add("hidden");
+          _bootMode = false;
+          Engine.loadAutoSave();
+        });
+        const autoDelBtn = document.createElement("button");
+        autoDelBtn.className = "slot-delete";
+        autoDelBtn.textContent = "\\uD83D\\uDDD1\\uFE0F";
+        autoDelBtn.title = "삭제";
+        autoDelBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          $overlay.classList.add("hidden");
+          showModal("자동 저장을 삭제할까요?", [
+            { label: "삭제", action: () => { Engine.deleteAutoSave(); showSlotUI("load"); } },
+            { label: "취소", action: () => showSlotUI("load") },
+          ]);
+        });
+        autoRow.appendChild(autoDelBtn);
+      } else {
+        const autoTitle = document.createElement("span");
+        autoTitle.className = "slot-title";
+        autoTitle.textContent = "(자동 저장 없음)";
+        autoInfoDiv.appendChild(autoTitle);
+        autoRow.appendChild(autoInfoDiv);
+        autoRow.disabled = true;
+        autoRow.classList.add("slot-empty");
+      }
+      list.appendChild(autoRow);
+    }
+
+    saves.forEach(s => {
+      const row = document.createElement("button");
+      row.className = "slot-row";
+      const isEmpty = !s.ts;
+
+      const info = document.createElement("div");
+      info.className = "slot-info";
+      const title = document.createElement("span");
+      title.className = "slot-title";
+      title.textContent = isEmpty ? "(빈 슬롯)" : (s.sceneTitle || "(제목 없음)");
+      info.appendChild(title);
+
+      if (!isEmpty) {
+        const date = document.createElement("span");
+        date.className = "slot-date";
+        date.textContent = new Date(s.ts).toLocaleString("ko-KR");
+        info.appendChild(date);
+      }
+
+      row.appendChild(info);
+
+      if (mode === "save") {
+        row.addEventListener("click", () => {
+          if (!isEmpty) {
+            // 덮어쓰기 확인
+            $overlay.classList.add("hidden");
+            showModal(\`슬롯 \${s.slot + 1}에 덮어쓸까요?\`, [
+              { label: "덮어쓰기", action: () => { Engine.save(s.slot); showModal("저장 완료!", [{ label: "확인" }]); } },
+              { label: "취소", action: () => showSlotUI("save") },
+            ]);
+          } else {
+            Engine.save(s.slot);
+            $overlay.classList.add("hidden");
+            showModal("저장 완료!", [{ label: "확인" }]);
+          }
+        });
+      } else {
+        // load mode
+        if (isEmpty) {
+          row.disabled = true;
+          row.classList.add("slot-empty");
+        } else {
+          row.addEventListener("click", () => {
+            $overlay.classList.add("hidden");
+            _bootMode = false;
+            Engine.load(s.slot);
+          });
+          const delBtn = document.createElement("button");
+          delBtn.className = "slot-delete";
+          delBtn.textContent = "\\uD83D\\uDDD1\\uFE0F";
+          delBtn.title = "삭제";
+          delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            $overlay.classList.add("hidden");
+            showModal("슬롯 " + (s.slot + 1) + "을 삭제할까요?", [
+              { label: "삭제", action: () => { Engine.deleteSave(s.slot); showSlotUI("load"); } },
+              { label: "취소", action: () => showSlotUI("load") },
+            ]);
+          });
+          row.appendChild(delBtn);
+        }
+      }
+
+      list.appendChild(row);
+    });
+
+    $modalBtns.appendChild(list);
+
+    // 전체 초기화 (불러오기 모드에서만, 저장 데이터가 있을 때)
+    if (mode === "load" && (saves.some(s => s.ts) || Engine.hasAutoSave())) {
+      const resetBtn = document.createElement("button");
+      resetBtn.textContent = "\\uD83D\\uDDD1\\uFE0F 전체 초기화";
+      resetBtn.className = "slot-reset-all";
+      resetBtn.addEventListener("click", () => {
+        $overlay.classList.add("hidden");
+        showModal("모든 저장 데이터를 삭제할까요?", [
+          { label: "전체 삭제", action: () => {
+            Engine.deleteAllSaves();
+            if (_bootMode) {
+              _bootMode = false;
+              Engine.startNewGame();
+            } else {
+              showModal("모든 저장 데이터가 삭제되었습니다.", [{ label: "확인" }]);
+            }
+          }},
+          { label: "취소", action: () => showSlotUI("load") },
+        ]);
+      });
+      $modalBtns.appendChild(resetBtn);
+    }
+
+    // 닫기 버튼
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "닫기";
+    closeBtn.addEventListener("click", () => {
+      $overlay.classList.add("hidden");
+      if (_bootMode) {
+        _bootMode = false;
+        Engine.startNewGame();
+      }
+    });
+    $modalBtns.appendChild(closeBtn);
+
+    $overlay.classList.remove("hidden");
+  }
+
+  let _bootMode = false;
+
+  /* ─── 버튼 이벤트 ─── */
+  $btnSave.addEventListener("click", () => {
+    showSlotUI("save");
+  });
+
+  $btnLoad.addEventListener("click", () => {
+    if (!Engine.hasSave()) {
+      showModal("저장 데이터가 없습니다.", [{ label: "확인" }]);
+      return;
+    }
+    showSlotUI("load");
+  });
+
+  $btnRestart.addEventListener("click", () => {
+    showModal("처음부터 다시 시작할까요?", [
+      { label: "네", action: () => Engine.restart() },
+      { label: "아니오" },
+    ]);
+  });
+
+  $btnBack.addEventListener("click", () => {
+    Engine.goBack();
+  });
+
+  $btnStorymap.addEventListener("click", () => {
+    const path = Engine.getScenePath();
+    $modalMsg.textContent = "스토리맵";
+    $modalBtns.innerHTML = "";
+
+    const mapDiv = document.createElement("div");
+    mapDiv.className = "story-map";
+
+    for (let i = path.length - 1; i >= 0; i--) {
+      const item = path[i];
+      const node = document.createElement("div");
+      node.className = "story-map-node" + (item.current ? " story-map-current" : "");
+
+      const dot = document.createElement("span");
+      dot.className = "story-map-dot";
+
+      const label = document.createElement("span");
+      label.className = "story-map-label";
+      label.textContent = item.title;
+
+      if (!item.current) {
+        node.style.cursor = "pointer";
+        node.addEventListener("click", ((idx) => () => {
+          $overlay.classList.add("hidden");
+          Engine.goToHistoryIndex(idx);
+        })(item.historyIndex));
+      }
+
+      node.appendChild(dot);
+      node.appendChild(label);
+      mapDiv.appendChild(node);
+    }
+
+    $modalBtns.appendChild(mapDiv);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "닫기";
+    closeBtn.addEventListener("click", () => { $overlay.classList.add("hidden"); });
+    $modalBtns.appendChild(closeBtn);
+
+    $overlay.classList.remove("hidden");
+  });
+
+  /* ─── 부팅 ─── */
+  Engine.init(GAME_DATA, render, showNameInput);
+
+  // HTML 제목을 game-data 타이틀과 동기화
+  document.title = GAME_DATA.title;
+  document.querySelector("#game-header h1").textContent = GAME_DATA.title;
+  $engineVersion.textContent = \`FINE Engine v\${FINE_ENGINE_VERSION}\`;
+
+  $storyPanel.addEventListener("scroll", updateChoiceFocusState);
+  window.addEventListener("resize", updateChoiceFocusState);
+
+  if (Engine.hasAutoSave()) {
+    Engine.loadAutoSave();
+  } else {
+    Engine.startNewGame();
+  }
+})();
+`,
+};
+
+  </script>
+  <script>
+(() => {
+  "use strict";
+
+  const FINE_ENGINE_VERSION = "0.1.0";
+
+  const VALID_NAME_FORMATS = ["korean", "japanese", "western"];
+  const CONDITION_TYPE_OPTIONS = [
+    { value: "none", label: "없음" },
+    { value: "flag", label: "flag" },
+    { value: "item", label: "item" },
+    { value: "visited", label: "visited" },
+    { value: "stat", label: "stat" },
+    { value: "and", label: "and" },
+    { value: "or", label: "or" },
+    { value: "raw", label: "raw JSON" },
+  ];
+  const EFFECT_TYPE_OPTIONS = [
+    { value: "setFlag", label: "setFlag" },
+    { value: "clearFlag", label: "clearFlag" },
+    { value: "addItem", label: "addItem" },
+    { value: "removeItem", label: "removeItem" },
+    { value: "addStat", label: "addStat" },
+    { value: "setStat", label: "setStat" },
+    { value: "raw", label: "raw JSON" },
+  ];
+  const STAT_OPERATORS = ["gte", "gt", "lte", "lt", "eq"];
+  const EMBEDDED_EXPORT_ASSETS = window.FINE_EMBEDDED_EXPORT_ASSETS || null;
+
+  function createEmptyGameData() {
+    return {
+      version: 1,
+      title: "",
+      nameFormat: "korean",
+      startScene: "",
+      initialFlags: {},
+      initialInventory: [],
+      initialStats: {},
+      endings: {},
+      scenes: {},
+    };
+  }
+
+  const state = {
+    data: createEmptyGameData(),
+    activeTab: "meta",
+    selectedSceneId: null,
+    selectedEndingId: null,
+    importedFileName: null,
+    dirty: false,
+  };
+
+  const elements = {
+    editorTitle: document.getElementById("editor-title"),
+    editorVersion: document.getElementById("editor-engine-version"),
+    status: document.getElementById("editor-status"),
+    counts: document.getElementById("editor-counts"),
+    helpButton: document.getElementById("btn-help"),
+    connectFileButton: document.getElementById("btn-connect-file"),
+    importFileInput: document.getElementById("input-import-data"),
+    resetButton: document.getElementById("btn-reset-data"),
+    exportButton: document.getElementById("btn-export-game"),
+    saveButton: document.getElementById("btn-save-data"),
+    helpOverlay: document.getElementById("help-overlay"),
+    helpBody: document.getElementById("help-body"),
+    closeHelpButton: document.getElementById("btn-close-help"),
+    tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+    tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
+    metaTitle: document.getElementById("meta-title"),
+    metaVersion: document.getElementById("meta-version"),
+    metaNameFormat: document.getElementById("meta-name-format"),
+    metaStartScene: document.getElementById("meta-start-scene"),
+    metaInventory: document.getElementById("meta-inventory"),
+    metaFlags: document.getElementById("meta-flags"),
+    metaStats: document.getElementById("meta-stats"),
+    sceneList: document.getElementById("scene-list"),
+    sceneFormCaption: document.getElementById("scene-form-caption"),
+    sceneId: document.getElementById("scene-id"),
+    sceneTitle: document.getElementById("scene-title"),
+    sceneText: document.getElementById("scene-text"),
+    sceneEnding: document.getElementById("scene-ending"),
+    sceneOnEnter: document.getElementById("scene-on-enter"),
+    sceneAutoNext: document.getElementById("scene-auto-next"),
+    sceneAutoDelay: document.getElementById("scene-auto-delay"),
+    sceneChoices: document.getElementById("scene-choices"),
+    addSceneButton: document.getElementById("btn-add-scene"),
+    deleteSceneButton: document.getElementById("btn-delete-scene"),
+    addChoiceButton: document.getElementById("btn-add-choice"),
+    endingList: document.getElementById("ending-list"),
+    endingFormCaption: document.getElementById("ending-form-caption"),
+    endingId: document.getElementById("ending-id"),
+    endingTitle: document.getElementById("ending-title"),
+    endingDescription: document.getElementById("ending-description"),
+    addEndingButton: document.getElementById("btn-add-ending"),
+    deleteEndingButton: document.getElementById("btn-delete-ending"),
+    sceneReferenceList: document.getElementById("scene-reference-list"),
+  };
+
+  init();
+
+  function init() {
+    ensureSelections();
+    renderHelpModal();
+    bindEvents();
+    render();
+    setStatus("빈 에디터를 불러왔습니다. JS 파일을 업로드하거나 새 데이터를 작성하세요.", "warn");
+  }
+
+  function bindEvents() {
+    elements.tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!flushActiveEditor()) return;
+        state.activeTab = button.dataset.tab;
+        renderTabs();
+      });
+    });
+
+    [
+      elements.metaTitle,
+      elements.metaVersion,
+      elements.metaNameFormat,
+      elements.metaStartScene,
+      elements.metaInventory,
+      elements.metaFlags,
+      elements.metaStats,
+      elements.sceneTitle,
+      elements.sceneText,
+      elements.sceneEnding,
+      elements.sceneOnEnter,
+      elements.sceneAutoNext,
+      elements.sceneAutoDelay,
+      elements.endingTitle,
+      elements.endingDescription,
+    ].forEach((control) => {
+      control.addEventListener("input", () => markDirty("편집 중입니다."));
+    });
+
+    elements.sceneId.addEventListener("input", () => markDirty("장면 ID 변경 대기 중입니다."));
+    elements.endingId.addEventListener("input", () => markDirty("엔딩 ID 변경 대기 중입니다."));
+    elements.addSceneButton.addEventListener("click", addScene);
+    elements.deleteSceneButton.addEventListener("click", deleteScene);
+    elements.addChoiceButton.addEventListener("click", addChoice);
+    elements.addEndingButton.addEventListener("click", addEnding);
+    elements.deleteEndingButton.addEventListener("click", deleteEnding);
+    elements.helpButton.addEventListener("click", showHelpModal);
+    elements.connectFileButton.addEventListener("click", connectFile);
+    elements.importFileInput.addEventListener("change", handleImportFileSelection);
+    elements.resetButton.addEventListener("click", resetData);
+    elements.exportButton.addEventListener("click", exportGameHtml);
+    elements.saveButton.addEventListener("click", saveGameData);
+    elements.closeHelpButton.addEventListener("click", hideHelpModal);
+    elements.helpOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.helpOverlay) hideHelpModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !elements.helpOverlay.classList.contains("hidden")) {
+        hideHelpModal();
+      }
+    });
+  }
+
+  function render() {
+    updateHeader();
+    renderTabs();
+    updateCounts();
+    updateReferenceList();
+  }
+
+  function renderTabs() {
+    elements.tabButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.tab === state.activeTab);
+    });
+    elements.tabPanels.forEach((panel) => {
+      panel.classList.toggle("is-active", panel.id === `tab-${state.activeTab}`);
+    });
+
+    if (state.activeTab === "meta") renderMetaForm();
+    if (state.activeTab === "scenes") {
+      renderSceneList();
+      renderSceneForm();
+    }
+    if (state.activeTab === "endings") {
+      renderEndingList();
+      renderEndingForm();
+    }
+  }
+
+  function updateHeader() {
+    elements.editorTitle.textContent = "FINE 엔진 에디터";
+    elements.editorVersion.textContent = `v${FINE_ENGINE_VERSION}`;
+    document.title = "FINE 엔진 에디터";
+  }
+
+  function renderHelpModal() {
+    elements.helpBody.innerHTML = [
+      '<section class="help-card">',
+      '<h3>조사 지시어란?</h3>',
+      '<p>이 지시어들은 이름의 마지막 글자에 받침이 있는지 자동으로 판단해 적절한 조사 형태를 붙입니다. name은 보통 이름, fullname은 성과 이름 전체를 뜻합니다.</p>',
+      '</section>',
+      '<section class="help-card">',
+      '<h3>name 계열</h3>',
+      '<div class="help-list">',
+      '<div class="help-item"><strong>{name가}</strong><span>받침이 있으면 이름이, 없으면 이름가로 출력합니다.</span></div>',
+      '<div class="help-item"><strong>{name이}</strong><span>받침이 있으면 이름 뒤에 이만 붙이고, 없으면 이름 그대로 출력합니다.</span></div>',
+      '<div class="help-item"><strong>{name야}</strong><span>받침이 있으면 이름아, 없으면 이름야로 출력합니다.</span></div>',
+      '<div class="help-item"><strong>{name을}</strong><span>받침이 있으면 이름을, 없으면 이름를로 출력합니다.</span></div>',
+      '<div class="help-item"><strong>{name은}</strong><span>받침이 있으면 이름은, 없으면 이름는으로 출력합니다.</span></div>',
+      '<div class="help-item"><strong>{name과}</strong><span>받침이 있으면 이름과, 없으면 이름와로 출력합니다.</span></div>',
+      '</div>',
+      '</section>',
+      '<section class="help-card">',
+      '<h3>fullname 계열</h3>',
+      '<div class="help-list">',
+      '<div class="help-item"><strong>{fullname가}</strong><span>전체 이름 뒤에 이 또는 가를 자동으로 붙입니다.</span></div>',
+      '<div class="help-item"><strong>{fullname이}</strong><span>전체 이름 뒤에 이만 필요할 때 붙이고, 필요 없으면 이름만 유지합니다.</span></div>',
+      '<div class="help-item"><strong>{fullname야}</strong><span>전체 이름 뒤에 아 또는 야를 자동으로 붙입니다.</span></div>',
+      '<div class="help-item"><strong>{fullname을}</strong><span>전체 이름 뒤에 을 또는 를 자동으로 붙입니다.</span></div>',
+      '<div class="help-item"><strong>{fullname은}</strong><span>전체 이름 뒤에 은 또는 는을 자동으로 붙입니다.</span></div>',
+      '<div class="help-item"><strong>{fullname과}</strong><span>전체 이름 뒤에 과 또는 와를 자동으로 붙입니다.</span></div>',
+      '</div>',
+      '</section>',
+    ].join("");
+  }
+
+  function showHelpModal() {
+    elements.helpOverlay.classList.remove("hidden");
+    elements.helpOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function hideHelpModal() {
+    elements.helpOverlay.classList.add("hidden");
+    elements.helpOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  function updateCounts() {
+    elements.counts.textContent = `장면 ${Object.keys(state.data.scenes).length}개 / 엔딩 ${Object.keys(state.data.endings).length}개`;
+  }
+
+  function renderMetaForm() {
+    elements.metaTitle.value = state.data.title || "";
+    elements.metaVersion.value = state.data.version ?? 1;
+    elements.metaNameFormat.value = state.data.nameFormat;
+    elements.metaStartScene.innerHTML = "";
+
+    Object.keys(state.data.scenes).forEach((sceneId) => {
+      const option = document.createElement("option");
+      option.value = sceneId;
+      option.textContent = sceneId;
+      elements.metaStartScene.appendChild(option);
+    });
+    elements.metaStartScene.value = state.data.startScene || Object.keys(state.data.scenes)[0] || "";
+
+    elements.metaInventory.value = (state.data.initialInventory || []).join("\n");
+    elements.metaFlags.value = formatJsonForField(state.data.initialFlags || {});
+    elements.metaStats.value = formatJsonForField(state.data.initialStats || undefined);
+  }
+
+  function renderSceneList() {
+    const sceneIds = Object.keys(state.data.scenes);
+    elements.sceneList.innerHTML = "";
+
+    sceneIds.forEach((sceneId) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `item-row${sceneId === state.selectedSceneId ? " is-active" : ""}`;
+      const title = state.data.scenes[sceneId].title || "(제목 없음)";
+      button.innerHTML = `<strong>${escapeHtml(sceneId)}</strong><span>${escapeHtml(title)}</span>`;
+      button.addEventListener("click", () => {
+        if (!flushActiveEditor()) return;
+        state.selectedSceneId = sceneId;
+        renderSceneList();
+        renderSceneForm();
+      });
+      elements.sceneList.appendChild(button);
+    });
+  }
+
+  function renderSceneForm() {
+    const scene = state.data.scenes[state.selectedSceneId];
+    const endingIds = Object.keys(state.data.endings);
+
+    elements.sceneEnding.innerHTML = '<option value="">(엔딩 없음)</option>';
+    endingIds.forEach((endingId) => {
+      const option = document.createElement("option");
+      option.value = endingId;
+      option.textContent = endingId;
+      elements.sceneEnding.appendChild(option);
+    });
+
+    if (!scene) {
+      elements.sceneFormCaption.textContent = "장면이 없습니다.";
+      elements.sceneId.value = "";
+      elements.sceneTitle.value = "";
+      elements.sceneText.value = "";
+      elements.sceneEnding.value = "";
+      elements.sceneOnEnter.value = "";
+      elements.sceneAutoNext.value = "";
+      elements.sceneAutoDelay.value = "";
+      elements.sceneChoices.innerHTML = "";
+      return;
+    }
+
+    elements.sceneFormCaption.textContent = `${state.selectedSceneId} 장면을 편집 중입니다.`;
+    elements.sceneId.value = state.selectedSceneId;
+    elements.sceneTitle.value = scene.title || "";
+    elements.sceneText.value = scene.text || "";
+    elements.sceneEnding.value = scene.ending || "";
+    elements.sceneOnEnter.value = formatJsonForField(scene.onEnter);
+    elements.sceneAutoNext.value = scene.autoNext || "";
+    elements.sceneAutoDelay.value = scene.autoDelay ?? "";
+    renderChoices(scene.choices || []);
+  }
+
+  function renderChoices(choices) {
+    elements.sceneChoices.innerHTML = "";
+    if (!choices.length) {
+      const empty = document.createElement("div");
+      empty.className = "choice-card";
+      empty.innerHTML = "<strong>선택지가 없습니다.</strong><p>새 선택지를 추가해 분기를 만들 수 있습니다.</p>";
+      elements.sceneChoices.appendChild(empty);
+      return;
+    }
+
+    choices.forEach((choice, index) => {
+      const card = document.createElement("div");
+      card.className = "choice-card";
+      card.dataset.choiceIndex = String(index);
+
+      const header = document.createElement("div");
+      header.className = "choice-card-header";
+      header.innerHTML = `<strong>선택지 ${index + 1}</strong>`;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "btn btn-danger";
+      removeButton.textContent = "삭제";
+      removeButton.addEventListener("click", () => removeChoice(index));
+      header.appendChild(removeButton);
+      card.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "choice-grid";
+      grid.appendChild(createField("라벨", "text", `choice-label-${index}`, choice.label || "", { full: true }));
+      grid.appendChild(createField("다음 장면", "text", `choice-next-${index}`, choice.next || "", { list: "scene-reference-list" }));
+      grid.appendChild(createField("툴팁", "text", `choice-tooltip-${index}`, choice.tooltip || ""));
+
+      const conditionBuilder = document.createElement("div");
+      conditionBuilder.id = `choice-condition-${index}`;
+      renderConditionBuilder(conditionBuilder, choice.condition, "조건");
+      grid.appendChild(createBuilderField("조건", conditionBuilder, { full: true }));
+
+      const effectsBuilder = document.createElement("div");
+      effectsBuilder.id = `choice-effects-${index}`;
+      renderEffectsBuilder(effectsBuilder, choice.effects, "효과");
+      grid.appendChild(createBuilderField("효과", effectsBuilder, { full: true }));
+
+      const disabledBuilder = document.createElement("div");
+      disabledBuilder.id = `choice-disabled-${index}`;
+      renderConditionBuilder(disabledBuilder, choice.disabled, "비활성 조건");
+      grid.appendChild(createBuilderField("비활성 조건", disabledBuilder, { full: true }));
+
+      card.appendChild(grid);
+      elements.sceneChoices.appendChild(card);
+    });
+  }
+
+  function renderEndingList() {
+    const endingIds = Object.keys(state.data.endings);
+    elements.endingList.innerHTML = "";
+
+    endingIds.forEach((endingId) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `item-row${endingId === state.selectedEndingId ? " is-active" : ""}`;
+      const title = state.data.endings[endingId].title || "(제목 없음)";
+      button.innerHTML = `<strong>${escapeHtml(endingId)}</strong><span>${escapeHtml(title)}</span>`;
+      button.addEventListener("click", () => {
+        if (!flushActiveEditor()) return;
+        state.selectedEndingId = endingId;
+        renderEndingList();
+        renderEndingForm();
+      });
+      elements.endingList.appendChild(button);
+    });
+  }
+
+  function renderEndingForm() {
+    const ending = state.data.endings[state.selectedEndingId];
+    if (!ending) {
+      elements.endingFormCaption.textContent = "엔딩이 없습니다.";
+      elements.endingId.value = "";
+      elements.endingTitle.value = "";
+      elements.endingDescription.value = "";
+      return;
+    }
+
+    elements.endingFormCaption.textContent = `${state.selectedEndingId} 엔딩을 편집 중입니다.`;
+    elements.endingId.value = state.selectedEndingId;
+    elements.endingTitle.value = ending.title || "";
+    elements.endingDescription.value = ending.description || "";
+  }
+
+  function updateReferenceList() {
+    elements.sceneReferenceList.innerHTML = "";
+    Object.keys(state.data.scenes).forEach((sceneId) => {
+      const option = document.createElement("option");
+      option.value = sceneId;
+      elements.sceneReferenceList.appendChild(option);
+    });
+  }
+
+  function flushActiveEditor() {
+    try {
+      if (state.activeTab === "meta") flushMetaForm();
+      if (state.activeTab === "scenes") flushSceneForm();
+      if (state.activeTab === "endings") flushEndingForm();
+      return true;
+    } catch (error) {
+      setStatus(error.message, "error");
+      alert(error.message);
+      return false;
+    }
+  }
+
+  function flushMetaForm() {
+    const title = elements.metaTitle.value.trim();
+    const startScene = elements.metaStartScene.value;
+    const version = Number.parseInt(elements.metaVersion.value, 10) || 1;
+    const nameFormat = VALID_NAME_FORMATS.includes(elements.metaNameFormat.value)
+      ? elements.metaNameFormat.value
+      : "korean";
+
+    state.data.title = title;
+    state.data.version = version;
+    state.data.nameFormat = nameFormat;
+    state.data.startScene = startScene;
+    state.data.initialInventory = splitTextareaList(elements.metaInventory.value);
+    state.data.initialFlags = parseOptionalJson(elements.metaFlags.value, "초기 플래그 JSON") || {};
+
+    const stats = parseOptionalJson(elements.metaStats.value, "초기 스탯 JSON");
+    if (stats === undefined || isEmptyObject(stats)) {
+      delete state.data.initialStats;
+    } else {
+      state.data.initialStats = stats;
+    }
+  }
+
+  function flushSceneForm() {
+    const currentSceneId = state.selectedSceneId;
+    if (!currentSceneId) return;
+
+    const nextSceneId = elements.sceneId.value.trim();
+    const title = elements.sceneTitle.value;
+    const text = elements.sceneText.value;
+    const choices = readChoiceCards();
+    const ending = elements.sceneEnding.value.trim();
+    const onEnter = parseOptionalJson(elements.sceneOnEnter.value, "onEnter JSON");
+    const autoNext = elements.sceneAutoNext.value.trim();
+    const autoDelayRaw = elements.sceneAutoDelay.value.trim();
+
+    const renamedSceneId = renameSceneId(currentSceneId, nextSceneId);
+    const scene = state.data.scenes[renamedSceneId];
+    if (!scene) return;
+
+    scene.title = title;
+    scene.text = text;
+    scene.choices = choices;
+
+    if (ending) {
+      scene.ending = ending;
+    } else {
+      delete scene.ending;
+    }
+
+    if (onEnter === undefined || isEmptyValue(onEnter)) {
+      delete scene.onEnter;
+    } else {
+      scene.onEnter = onEnter;
+    }
+
+    if (autoNext) {
+      scene.autoNext = autoNext;
+    } else {
+      delete scene.autoNext;
+    }
+
+    if (autoDelayRaw) {
+      scene.autoDelay = Number.parseInt(autoDelayRaw, 10) || 0;
+    } else {
+      delete scene.autoDelay;
+    }
+  }
+
+  function flushEndingForm() {
+    const currentEndingId = state.selectedEndingId;
+    if (!currentEndingId) return;
+
+    const nextEndingId = elements.endingId.value.trim();
+    const renamedEndingId = renameEndingId(currentEndingId, nextEndingId);
+    const ending = state.data.endings[renamedEndingId];
+    if (!ending) return;
+    ending.title = elements.endingTitle.value;
+    ending.description = elements.endingDescription.value;
+  }
+
+  function readChoiceCards() {
+    const cards = Array.from(elements.sceneChoices.querySelectorAll(".choice-card[data-choice-index]"));
+    return cards.map((card) => {
+      const index = card.dataset.choiceIndex;
+      const label = card.querySelector(`#choice-label-${index}`).value;
+      const next = card.querySelector(`#choice-next-${index}`).value.trim();
+      const tooltip = card.querySelector(`#choice-tooltip-${index}`).value;
+      const condition = card.querySelector(`#choice-condition-${index}`)._readCondition();
+      const effects = card.querySelector(`#choice-effects-${index}`)._readEffects();
+      const disabled = card.querySelector(`#choice-disabled-${index}`)._readCondition();
+
+      const choice = { label, next };
+      if (tooltip.trim()) choice.tooltip = tooltip;
+      if (condition !== undefined && !isEmptyValue(condition)) choice.condition = condition;
+      if (effects !== undefined && !isEmptyValue(effects)) choice.effects = effects;
+      if (disabled !== undefined && !isEmptyValue(disabled)) choice.disabled = disabled;
+      return choice;
+    });
+  }
+
+  function addScene() {
+    if (!flushActiveEditor()) return;
+    const newId = prompt("새 장면 ID를 입력하세요.");
+    if (!newId) return;
+    const sceneId = newId.trim();
+    if (!sceneId) return;
+    if (state.data.scenes[sceneId]) {
+      alert("이미 존재하는 장면 ID입니다.");
+      return;
+    }
+
+    state.data.scenes[sceneId] = {
+      title: "",
+      text: "",
+      choices: [],
+    };
+
+    state.selectedSceneId = sceneId;
+    markDirty(`장면 ${sceneId}를 추가했습니다.`);
+    updateReferenceList();
+    renderSceneList();
+    renderSceneForm();
+    renderMetaForm();
+    updateCounts();
+  }
+
+  function deleteScene() {
+    if (!flushActiveEditor()) return;
+    const sceneId = state.selectedSceneId;
+    if (!sceneId) return;
+
+    const references = findSceneReferences(sceneId);
+    if (references.length) {
+      alert(`이 장면을 참조하는 항목이 있어 삭제할 수 없습니다.\n\n${references.join("\n")}`);
+      return;
+    }
+
+    if (!confirm(`${sceneId} 장면을 삭제할까요?`)) return;
+
+    delete state.data.scenes[sceneId];
+    ensureSelections();
+    if (state.data.startScene === sceneId) {
+      state.data.startScene = Object.keys(state.data.scenes)[0] || "";
+    }
+    markDirty(`장면 ${sceneId}를 삭제했습니다.`);
+    updateReferenceList();
+    renderSceneList();
+    renderSceneForm();
+    renderMetaForm();
+    updateCounts();
+  }
+
+  function addChoice() {
+    if (!flushActiveEditor()) return;
+    const scene = state.data.scenes[state.selectedSceneId];
+    if (!scene) return;
+    scene.choices = scene.choices || [];
+    scene.choices.push({ label: "", next: "" });
+    markDirty("선택지를 추가했습니다.");
+    renderSceneForm();
+  }
+
+  function removeChoice(index) {
+    if (!flushActiveEditor()) return;
+    const scene = state.data.scenes[state.selectedSceneId];
+    if (!scene) return;
+    scene.choices.splice(index, 1);
+    markDirty(`선택지 ${index + 1}개째를 삭제했습니다.`);
+    renderSceneForm();
+  }
+
+  function addEnding() {
+    if (!flushActiveEditor()) return;
+    const newId = prompt("새 엔딩 ID를 입력하세요.");
+    if (!newId) return;
+    const endingId = newId.trim();
+    if (!endingId) return;
+    if (state.data.endings[endingId]) {
+      alert("이미 존재하는 엔딩 ID입니다.");
+      return;
+    }
+
+    state.data.endings[endingId] = {
+      title: "",
+      description: "",
+    };
+    state.selectedEndingId = endingId;
+    markDirty(`엔딩 ${endingId}를 추가했습니다.`);
+    renderEndingList();
+    renderEndingForm();
+    if (state.activeTab === "scenes") renderSceneForm();
+    updateCounts();
+  }
+
+  function deleteEnding() {
+    if (!flushActiveEditor()) return;
+    const endingId = state.selectedEndingId;
+    if (!endingId) return;
+
+    const linkedScenes = Object.entries(state.data.scenes)
+      .filter(([, scene]) => scene.ending === endingId)
+      .map(([sceneId]) => sceneId);
+
+    let message = `${endingId} 엔딩을 삭제할까요?`;
+    if (linkedScenes.length) {
+      message += `\n\n이 엔딩을 사용하는 장면 ${linkedScenes.length}개에서 ending 연결도 함께 제거됩니다.`;
+    }
+    if (!confirm(message)) return;
+
+    linkedScenes.forEach((sceneId) => {
+      delete state.data.scenes[sceneId].ending;
+    });
+    delete state.data.endings[endingId];
+    ensureSelections();
+    markDirty(`엔딩 ${endingId}를 삭제했습니다.`);
+    renderEndingList();
+    renderEndingForm();
+    if (state.activeTab === "scenes") renderSceneForm();
+    updateCounts();
+  }
+
+  async function connectFile() {
+    elements.importFileInput.click();
+  }
+
+  async function handleImportFileSelection(event) {
+    const [file] = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = parseGameDataSource(text);
+      const validation = validateImportedGameData(parsed);
+
+      if (!flushActiveEditor()) return;
+      if (validation.errors.length) {
+        const message = formatIssueReport("업로드한 JS 파일 형식이 올바르지 않아 불러올 수 없습니다.", validation.errors);
+        setStatus("업로드 실패: 형식이 맞지 않습니다.", "error");
+        alert(message);
+        return;
+      }
+
+      state.importedFileName = file.name;
+      state.data = validation.data;
+      state.dirty = false;
+      ensureSelections();
+      render();
+      if (validation.warnings.length) {
+        setStatus(`${file.name} 파일을 불러왔습니다. 경고 ${validation.warnings.length}건이 있습니다.`, "warn");
+        alert(formatIssueReport("파일은 불러왔지만 확인할 경고가 있습니다.", validation.warnings));
+      } else {
+        setStatus(`${file.name} 파일을 불러왔습니다.`, "success");
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      setStatus(`파일 업로드 실패: ${error.message}`, "error");
+      alert(`JS 파일을 불러오지 못했습니다.\n\n${error.message}`);
+    }
+  }
+
+  function resetData() {
+    if (!confirm("현재 편집 내용을 버리고 완전히 빈 상태로 되돌릴까요?")) return;
+    state.data = createEmptyGameData();
+    state.importedFileName = null;
+    state.dirty = false;
+    ensureSelections();
+    render();
+    setStatus("빈 편집 상태로 되돌렸습니다.", "success");
+  }
+
+  async function saveGameData() {
+    if (!flushActiveEditor()) return;
+
+    const analysis = analyzeGameData(state.data);
+    if (analysis.criticalIssues.length) {
+      const message = formatIssueReport("저장 전에 수정해야 할 치명적인 문제가 있습니다.", analysis.criticalIssues);
+      setStatus("검증 실패: 저장을 중단했습니다.", "error");
+      alert(message);
+      return;
+    }
+
+    const source = buildGameDataSource(state.data);
+
+    try {
+      let savedLabel = "game-data.js 파일";
+
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: "game-data.js",
+          types: [
+            {
+              description: "JavaScript",
+              accept: { "text/javascript": [".js"] },
+            },
+          ],
+        });
+        await writeToFileHandle(handle, source);
+        savedLabel = `${handle.name} 파일`;
+      } else {
+        downloadTextFile("game-data.js", source);
+      }
+
+      state.dirty = false;
+      if (analysis.warnings.length) {
+        setStatus(`${savedLabel} 저장을 완료했습니다. 경고 ${analysis.warnings.length}건이 있습니다.`, "warn");
+        alert(formatIssueReport("저장은 완료되었지만 확인할 경고가 있습니다.", analysis.warnings));
+      } else {
+        setStatus(`${savedLabel} 저장을 완료했습니다.`, "success");
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      setStatus(`저장 실패: ${error.message}`, "error");
+    }
+  }
+
+  async function exportGameHtml() {
+    if (!flushActiveEditor()) return;
+
+    const analysis = analyzeGameData(state.data);
+    if (analysis.criticalIssues.length) {
+      const message = formatIssueReport("내보내기 전에 수정해야 할 치명적인 문제가 있습니다.", analysis.criticalIssues);
+      setStatus("검증 실패: 내보내기를 중단했습니다.", "error");
+      alert(message);
+      return;
+    }
+
+    try {
+      const assets = await loadExportAssets();
+      const gameDataSource = buildGameDataSource(state.data);
+      const buildResult = buildStandaloneHtml({
+        indexHtml: assets.indexHtml,
+        stylesCss: assets.stylesCss,
+        engineJs: assets.engineJs,
+        appJs: assets.appJs,
+        gameDataSource,
+        gameTitle: state.data.title || "FINE Game",
+      });
+      const combinedWarnings = [...analysis.warnings, ...buildResult.warnings];
+
+      const filename = `${sanitizeFilename(state.data.title || "fine-game")}.html`;
+
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [
+            {
+              description: "HTML",
+              accept: { "text/html": [".html"] },
+            },
+          ],
+        });
+        await writeToFileHandle(handle, buildResult.html);
+      } else {
+        downloadTextFile(filename, buildResult.html, "text/html;charset=utf-8");
+      }
+
+      if (combinedWarnings.length) {
+        setStatus(`${filename} 파일로 내보냈습니다. 경고 ${combinedWarnings.length}건이 있습니다.`, "warn");
+        alert(formatIssueReport("내보내기는 완료되었지만 확인할 경고가 있습니다.", combinedWarnings));
+      } else {
+        setStatus(`${filename} 파일로 독립 실행형 게임을 내보냈습니다.`, "success");
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      setStatus(`내보내기 실패: ${error.message}`, "error");
+      alert(`게임 HTML 내보내기에 실패했습니다.\n\n${error.message}`);
+    }
+  }
+
+  function analyzeGameData(data) {
+    const criticalIssues = [];
+    const warnings = [];
+    const sceneIds = new Set(Object.keys(data.scenes));
+    const endingIds = new Set(Object.keys(data.endings));
+
+    if (!data.title || !data.title.trim()) warnings.push("- 기본 정보: 게임 제목이 비어 있습니다. 기본 파일명을 사용합니다.");
+    if (!sceneIds.has(data.startScene)) criticalIssues.push(`- 기본 정보: 시작 장면 ${data.startScene || "(비어 있음)"}이 존재하지 않습니다.`);
+    if (!VALID_NAME_FORMATS.includes(data.nameFormat)) warnings.push(`- 기본 정보: nameFormat 값 ${data.nameFormat}은 지원되지 않습니다. 런타임에서 기본값으로 처리될 수 있습니다.`);
+
+    Object.entries(data.scenes).forEach(([sceneId, scene]) => {
+      if (!Array.isArray(scene.choices)) {
+        criticalIssues.push(`- 장면 ${sceneId}: choices는 배열이어야 합니다.`);
+        return;
+      }
+
+      if (scene.ending && !endingIds.has(scene.ending)) {
+        warnings.push(`- 장면 ${sceneId}: 연결된 엔딩 ${scene.ending}이 존재하지 않습니다.`);
+      }
+
+      if (scene.autoNext && !sceneIds.has(scene.autoNext)) {
+        warnings.push(`- 장면 ${sceneId}: autoNext ${scene.autoNext}가 존재하지 않습니다.`);
+      }
+
+      scene.choices.forEach((choice, index) => {
+        if (!choice.label) warnings.push(`- 장면 ${sceneId} 선택지 ${index + 1}: 라벨이 비어 있습니다.`);
+        if (!choice.next) {
+          warnings.push(`- 장면 ${sceneId} 선택지 ${index + 1}: 다음 장면이 비어 있습니다.`);
+        } else if (!sceneIds.has(choice.next)) {
+          warnings.push(`- 장면 ${sceneId} 선택지 ${index + 1}: 다음 장면 ${choice.next}가 존재하지 않습니다.`);
+        }
+      });
+    });
+
+    return { criticalIssues, warnings };
+  }
+
+  function buildGameDataSource(data) {
+    const serializable = buildSerializableGameData(data);
+    return [
+      "/* =========================================================",
+      "   game-data.js — editor-generated story data",
+      "   ========================================================= */",
+      "",
+      `const GAME_DATA = ${formatValue(serializable, 0)};`,
+      "",
+    ].join("\n");
+  }
+
+  function buildStandaloneHtml({ indexHtml, stylesCss, engineJs, appJs, gameDataSource, gameTitle }) {
+    const warnings = [];
+    const inlineStyles = `<style>\n${stylesCss}\n</style>`;
+    const inlineScripts = [engineJs, gameDataSource, appJs]
+      .map((source) => `<script>\n${escapeInlineScript(source)}\n<\/script>`)
+      .join("\n");
+
+    let html = indexHtml;
+    if (!/<head[\s>]/i.test(html)) {
+      throw new Error("index.html에 <head> 태그가 없어 내보내기 조립을 진행할 수 없습니다.");
+    }
+    if (!/<body[\s>]/i.test(html)) {
+      throw new Error("index.html에 <body> 태그가 없어 내보내기 조립을 진행할 수 없습니다.");
+    }
+
+    if (/<title>[\s\S]*?<\/title>/i.test(html)) {
+      html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(gameTitle)}</title>`);
+    } else {
+      warnings.push("- index.html에 <title> 태그가 없어 export 과정에서 새 title 태그를 추가했습니다.");
+      html = insertBeforeClosingTag(html, "head", `  <title>${escapeHtml(gameTitle)}</title>`);
+    }
+
+    html = html.replace(/\s*<link[^>]+href="favicon[^"]*"[^>]*>\s*/gi, "\n");
+    html = html.replace(/\s*<link[^>]+href="apple-touch-icon\.png"[^>]*>\s*/gi, "\n");
+
+    if (/<link[^>]+href="styles\.css"[^>]*>/i.test(html)) {
+      html = html.replace(/<link[^>]+href="styles\.css"[^>]*>/i, inlineStyles);
+    } else {
+      html = insertBeforeClosingTag(html, "head", `  ${inlineStyles}`);
+    }
+
+    ["js/engine.js", "js/game-data.js", "js/app.js"].forEach((scriptPath) => {
+      const pattern = new RegExp(`\\s*<script[^>]+src=["']${escapeRegExp(scriptPath)}["'][^>]*><\\/script>\\s*`, "gi");
+      html = html.replace(pattern, "\n");
+    });
+
+    html = insertBeforeClosingTag(html, "body", inlineScripts);
+
+    return { html, warnings };
+  }
+
+  function buildSerializableGameData(data) {
+    const ordered = {};
+    const knownTopKeys = new Set([
+      "version",
+      "title",
+      "nameFormat",
+      "startScene",
+      "initialFlags",
+      "initialInventory",
+      "initialStats",
+      "endings",
+      "scenes",
+    ]);
+
+    ordered.version = data.version ?? 1;
+    ordered.title = data.title || "";
+    ordered.nameFormat = VALID_NAME_FORMATS.includes(data.nameFormat) ? data.nameFormat : "korean";
+    ordered.startScene = data.startScene || "";
+    ordered.initialFlags = data.initialFlags || {};
+    ordered.initialInventory = data.initialInventory || [];
+    if (data.initialStats && !isEmptyObject(data.initialStats)) {
+      ordered.initialStats = data.initialStats;
+    }
+
+    ordered.endings = {};
+    Object.entries(data.endings).forEach(([endingId, ending]) => {
+      ordered.endings[endingId] = buildOrderedEnding(ending);
+    });
+
+    ordered.scenes = {};
+    Object.entries(data.scenes).forEach(([sceneId, scene]) => {
+      ordered.scenes[sceneId] = buildOrderedScene(scene);
+    });
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (!knownTopKeys.has(key)) ordered[key] = value;
+    });
+
+    return ordered;
+  }
+
+  function buildOrderedEnding(ending) {
+    const ordered = {
+      title: ending.title || "",
+      description: ending.description || "",
+    };
+
+    Object.entries(ending).forEach(([key, value]) => {
+      if (!(key in ordered)) ordered[key] = value;
+    });
+    return ordered;
+  }
+
+  function buildOrderedScene(scene) {
+    const ordered = {
+      title: scene.title || "",
+      text: scene.text || "",
+      choices: Array.isArray(scene.choices) ? scene.choices.map(buildOrderedChoice) : [],
+    };
+
+    if (scene.onEnter !== undefined && !isEmptyValue(scene.onEnter)) ordered.onEnter = scene.onEnter;
+    if (scene.ending) ordered.ending = scene.ending;
+    if (scene.autoNext) ordered.autoNext = scene.autoNext;
+    if (scene.autoDelay !== undefined && scene.autoDelay !== "") ordered.autoDelay = scene.autoDelay;
+
+    Object.entries(scene).forEach(([key, value]) => {
+      if (!(key in ordered)) ordered[key] = value;
+    });
+    return ordered;
+  }
+
+  function buildOrderedChoice(choice) {
+    const ordered = {
+      label: choice.label || "",
+      next: choice.next || "",
+    };
+
+    if (choice.condition !== undefined && !isEmptyValue(choice.condition)) ordered.condition = choice.condition;
+    if (choice.effects !== undefined && !isEmptyValue(choice.effects)) ordered.effects = choice.effects;
+    if (choice.tooltip) ordered.tooltip = choice.tooltip;
+    if (choice.disabled !== undefined && !isEmptyValue(choice.disabled)) ordered.disabled = choice.disabled;
+
+    Object.entries(choice).forEach(([key, value]) => {
+      if (!(key in ordered)) ordered[key] = value;
+    });
+    return ordered;
+  }
+
+  function formatValue(value, depth) {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+    if (typeof value === "string") return formatString(value);
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+
+    if (Array.isArray(value)) {
+      if (!value.length) return "[]";
+      const simpleArray = value.every(isSimpleValue) && value.length <= 4;
+      if (simpleArray) {
+        return `[${value.map((item) => formatValue(item, depth + 1)).join(", ")}]`;
+      }
+
+      const indent = "  ".repeat(depth);
+      const childIndent = "  ".repeat(depth + 1);
+      return `[` + "\n" + `${value.map((item) => `${childIndent}${formatValue(item, depth + 1)}`).join(",\n")}` + `\n${indent}]`;
+    }
+
+    const entries = Object.entries(value).filter(([, entryValue]) => entryValue !== undefined);
+    if (!entries.length) return "{}";
+
+    const indent = "  ".repeat(depth);
+    const childIndent = "  ".repeat(depth + 1);
+    return `{\n${entries.map(([key, entryValue]) => `${childIndent}${formatKey(key)}: ${formatValue(entryValue, depth + 1)}`).join(",\n")}\n${indent}}`;
+  }
+
+  function formatString(value) {
+    if (value.includes("\n")) {
+      const escaped = value
+        .replace(/\\/g, "\\\\")
+        .replace(/`/g, "\\`")
+        .replace(/\$\{/g, "\\${");
+      return `\`${escaped}\``;
+    }
+    return JSON.stringify(value);
+  }
+
+  function formatKey(key) {
+    return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+  }
+
+  function isSimpleValue(value) {
+    return value === null || ["string", "number", "boolean"].includes(typeof value);
+  }
+
+  function ensureSelections() {
+    const sceneIds = Object.keys(state.data.scenes);
+    const endingIds = Object.keys(state.data.endings);
+
+    if (!sceneIds.includes(state.selectedSceneId)) {
+      state.selectedSceneId = sceneIds[0] || null;
+    }
+    if (!endingIds.includes(state.selectedEndingId)) {
+      state.selectedEndingId = endingIds[0] || null;
+    }
+    if (!sceneIds.includes(state.data.startScene)) {
+      state.data.startScene = sceneIds[0] || "";
+    }
+  }
+
+  function normalizeData(data) {
+    const normalized = data && typeof data === "object" ? data : {};
+    normalized.version = normalized.version ?? 1;
+    normalized.title = normalized.title || "";
+    normalized.nameFormat = VALID_NAME_FORMATS.includes(normalized.nameFormat) ? normalized.nameFormat : "korean";
+    normalized.startScene = normalized.startScene || "";
+    normalized.initialFlags = normalized.initialFlags && typeof normalized.initialFlags === "object" ? normalized.initialFlags : {};
+    normalized.initialInventory = Array.isArray(normalized.initialInventory) ? normalized.initialInventory : [];
+    if (normalized.initialStats !== undefined && (typeof normalized.initialStats !== "object" || Array.isArray(normalized.initialStats))) {
+      normalized.initialStats = {};
+    }
+    normalized.endings = normalized.endings && typeof normalized.endings === "object" ? normalized.endings : {};
+    normalized.scenes = normalized.scenes && typeof normalized.scenes === "object" ? normalized.scenes : {};
+
+    Object.values(normalized.scenes).forEach((scene) => {
+      if (!Array.isArray(scene.choices)) scene.choices = [];
+      if (scene.title === undefined) scene.title = "";
+      if (scene.text === undefined) scene.text = "";
+    });
+
+    return normalized;
+  }
+
+  function validateImportedGameData(data) {
+    const errors = [];
+    const warnings = [];
+
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return { data: createEmptyGameData(), errors: ["- GAME_DATA 객체를 찾지 못했습니다."], warnings };
+    }
+
+    if (!data.scenes || typeof data.scenes !== "object" || Array.isArray(data.scenes)) {
+      errors.push("- scenes 객체가 없거나 올바른 객체 형식이 아닙니다.");
+    } else if (Object.keys(data.scenes).length === 0) {
+      errors.push("- scenes가 비어 있습니다. 최소 1개 이상의 장면이 필요합니다.");
+    }
+
+    if (data.endings !== undefined && (typeof data.endings !== "object" || Array.isArray(data.endings))) {
+      errors.push("- endings는 객체여야 합니다.");
+    }
+
+    const normalized = normalizeData(clonePlainData(data));
+    const analysis = analyzeGameData(normalized);
+    errors.push(...analysis.criticalIssues);
+    warnings.push(...analysis.warnings);
+
+    if (!normalized.title.trim()) {
+      warnings.unshift("- 기본 정보: 게임 제목이 비어 있습니다.");
+    }
+
+    return { data: normalized, errors, warnings };
+  }
+
+  function clonePlainData(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  async function loadExportAssets() {
+    if (!EMBEDDED_EXPORT_ASSETS) {
+      throw new Error("에디터에 내장된 export 자산을 찾지 못했습니다. js/editor-export-assets.js가 로드되었는지 확인해 주세요.");
+    }
+
+    if (!EMBEDDED_EXPORT_ASSETS.indexHtml || !EMBEDDED_EXPORT_ASSETS.stylesCss || !EMBEDDED_EXPORT_ASSETS.engineJs || !EMBEDDED_EXPORT_ASSETS.appJs) {
+      throw new Error("에디터에 내장된 export 자산이 불완전합니다. js/editor-export-assets.js를 최신 원본 파일 기준으로 다시 갱신해 주세요.");
+    }
+
+    return {
+      indexHtml: EMBEDDED_EXPORT_ASSETS.indexHtml,
+      stylesCss: EMBEDDED_EXPORT_ASSETS.stylesCss,
+      engineJs: EMBEDDED_EXPORT_ASSETS.engineJs,
+      appJs: EMBEDDED_EXPORT_ASSETS.appJs,
+    };
+  }
+
+  function parseGameDataSource(source) {
+    try {
+      const parsed = new Function(`${source}\nreturn GAME_DATA;`)();
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("GAME_DATA 객체를 찾지 못했습니다.");
+      }
+      return parsed;
+    } catch (error) {
+      throw new Error(`game-data.js 파싱 실패: ${error.message}`);
+    }
+  }
+
+  function createField(label, type, id, value, options = {}) {
+    const wrapper = document.createElement("label");
+    wrapper.className = `field${options.full ? " field-full" : ""}`;
+
+    const text = document.createElement("span");
+    text.textContent = label;
+    wrapper.appendChild(text);
+
+    let control;
+    if (type === "textarea") {
+      control = document.createElement("textarea");
+      control.rows = options.rows || 4;
+      control.spellcheck = false;
+      control.value = value || "";
+    } else {
+      control = document.createElement("input");
+      control.type = type;
+      control.value = value || "";
+      if (options.list) control.setAttribute("list", options.list);
+    }
+
+    control.id = id;
+    if (options.disabled) control.disabled = true;
+    control.addEventListener("input", () => markDirty("편집 중입니다."));
+    wrapper.appendChild(control);
+    return wrapper;
+  }
+
+  function createBuilderField(label, node, options = {}) {
+    const wrapper = document.createElement("label");
+    wrapper.className = `field${options.full ? " field-full" : ""}`;
+    const text = document.createElement("span");
+    text.textContent = label;
+    wrapper.appendChild(text);
+    wrapper.appendChild(node);
+    return wrapper;
+  }
+
+  function createStandaloneField(label) {
+    const wrapper = document.createElement("label");
+    wrapper.className = "field";
+    const text = document.createElement("span");
+    text.textContent = label;
+    wrapper.appendChild(text);
+    return wrapper;
+  }
+
+  function createHint(text) {
+    const hint = document.createElement("p");
+    hint.className = "builder-hint";
+    hint.textContent = text;
+    return hint;
+  }
+
+  function splitTextareaList(value) {
+    return value
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function parseOptionalJson(raw, label) {
+    const trimmed = raw.trim();
+    if (!trimmed) return undefined;
+    try {
+      return JSON.parse(trimmed);
+    } catch (error) {
+      throw new Error(`${label}이 올바른 JSON이 아닙니다: ${error.message}`);
+    }
+  }
+
+  function formatJsonForField(value) {
+    if (value === undefined || isEmptyValue(value)) return "";
+    return JSON.stringify(value, null, 2);
+  }
+
+  function renderConditionBuilder(container, value, title) {
+    const normalized = normalizeConditionValue(value);
+    container.className = "builder-shell";
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "builder-header";
+
+    const heading = document.createElement("strong");
+    heading.textContent = title;
+    header.appendChild(heading);
+
+    const typeSelect = document.createElement("select");
+    CONDITION_TYPE_OPTIONS.forEach((optionData) => {
+      const option = document.createElement("option");
+      option.value = optionData.value;
+      option.textContent = optionData.label;
+      typeSelect.appendChild(option);
+    });
+    typeSelect.value = normalized.type;
+    typeSelect.addEventListener("change", () => {
+      markDirty("조건 편집 중입니다.");
+      renderConditionBuilder(container, getDefaultConditionValue(typeSelect.value), title);
+    });
+    header.appendChild(typeSelect);
+    container.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "builder-body";
+    container.appendChild(body);
+
+    let readCondition = () => undefined;
+
+    if (normalized.type === "none") {
+      body.appendChild(createHint("조건이 없으면 항상 보이는 선택지가 됩니다."));
+      readCondition = () => undefined;
+    } else if (["flag", "item", "visited"].includes(normalized.type)) {
+      const inline = document.createElement("div");
+      inline.className = "builder-inline";
+
+      const nameLabel = createStandaloneField(normalized.type === "item" ? "값" : "이름");
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = normalized.name || "";
+      nameInput.addEventListener("input", () => markDirty("조건 편집 중입니다."));
+      nameLabel.appendChild(nameInput);
+      inline.appendChild(nameLabel);
+
+      const negateLabel = createStandaloneField("부정 조건");
+      const negateSelect = document.createElement("select");
+      [
+        { value: "false", label: "아니오" },
+        { value: "true", label: "예 (! 접두)" },
+      ].forEach((optionData) => {
+        const option = document.createElement("option");
+        option.value = optionData.value;
+        option.textContent = optionData.label;
+        negateSelect.appendChild(option);
+      });
+      negateSelect.value = normalized.negate ? "true" : "false";
+      negateSelect.addEventListener("change", () => markDirty("조건 편집 중입니다."));
+      negateLabel.appendChild(negateSelect);
+      inline.appendChild(negateLabel);
+
+      body.appendChild(inline);
+      readCondition = () => {
+        const name = nameInput.value.trim();
+        if (!name) return undefined;
+        const stored = negateSelect.value === "true" ? `!${name}` : name;
+        return { [normalized.type]: stored };
+      };
+    } else if (normalized.type === "stat") {
+      const inline = document.createElement("div");
+      inline.className = "builder-inline builder-inline--triple";
+
+      const statLabel = createStandaloneField("스탯 키");
+      const statInput = document.createElement("input");
+      statInput.type = "text";
+      statInput.value = normalized.stat || "";
+      statInput.addEventListener("input", () => markDirty("조건 편집 중입니다."));
+      statLabel.appendChild(statInput);
+      inline.appendChild(statLabel);
+
+      const opLabel = createStandaloneField("비교");
+      const opSelect = document.createElement("select");
+      STAT_OPERATORS.forEach((operator) => {
+        const option = document.createElement("option");
+        option.value = operator;
+        option.textContent = operator;
+        opSelect.appendChild(option);
+      });
+      opSelect.value = normalized.operator;
+      opSelect.addEventListener("change", () => markDirty("조건 편집 중입니다."));
+      opLabel.appendChild(opSelect);
+      inline.appendChild(opLabel);
+
+      const valueLabel = createStandaloneField("값");
+      const valueInput = document.createElement("input");
+      valueInput.type = "number";
+      valueInput.step = "1";
+      valueInput.value = normalized.value ?? 0;
+      valueInput.addEventListener("input", () => markDirty("조건 편집 중입니다."));
+      valueLabel.appendChild(valueInput);
+      inline.appendChild(valueLabel);
+
+      body.appendChild(inline);
+      readCondition = () => {
+        const stat = statInput.value.trim();
+        if (!stat) return undefined;
+        return {
+          stat,
+          [opSelect.value]: Number(valueInput.value || 0),
+        };
+      };
+    } else if (["and", "or"].includes(normalized.type)) {
+      const list = document.createElement("div");
+      list.className = "builder-group-list";
+      body.appendChild(list);
+
+      const children = normalized.children.length ? normalized.children : [getDefaultConditionValue("flag")];
+      children.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "builder-group-item";
+
+        const rowHeader = document.createElement("div");
+        rowHeader.className = "builder-group-item-header";
+        const rowTitle = document.createElement("strong");
+        rowTitle.textContent = `${normalized.type.toUpperCase()} 조건 ${index + 1}`;
+        rowHeader.appendChild(rowTitle);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "btn btn-danger";
+        removeButton.textContent = "삭제";
+        removeButton.addEventListener("click", () => {
+          const current = container._readCondition() || { [normalized.type]: [] };
+          current[normalized.type].splice(index, 1);
+          markDirty("조건 편집 중입니다.");
+          renderConditionBuilder(container, current, title);
+        });
+        rowHeader.appendChild(removeButton);
+        row.appendChild(rowHeader);
+
+        const nested = document.createElement("div");
+        renderConditionBuilder(nested, item, `하위 조건 ${index + 1}`);
+        row.appendChild(nested);
+        list.appendChild(row);
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "builder-actions";
+      const addButton = document.createElement("button");
+      addButton.type = "button";
+      addButton.className = "btn btn-secondary";
+      addButton.textContent = "하위 조건 추가";
+      addButton.addEventListener("click", () => {
+        const current = container._readCondition() || { [normalized.type]: [] };
+        current[normalized.type].push(getDefaultConditionValue("flag"));
+        markDirty("조건 편집 중입니다.");
+        renderConditionBuilder(container, current, title);
+      });
+      actions.appendChild(addButton);
+      body.appendChild(actions);
+
+      readCondition = () => {
+        const childValues = Array.from(list.querySelectorAll(":scope > .builder-group-item > .builder-shell"))
+          .map((item) => item._readCondition())
+          .filter((item) => item !== undefined);
+        if (!childValues.length) return undefined;
+        return { [normalized.type]: childValues };
+      };
+    } else {
+      const raw = document.createElement("textarea");
+      raw.className = "builder-raw";
+      raw.rows = 8;
+      raw.spellcheck = false;
+      raw.value = normalized.rawText;
+      raw.addEventListener("input", () => markDirty("조건 편집 중입니다."));
+      body.appendChild(raw);
+      readCondition = () => parseOptionalJson(raw.value, `${title} raw JSON`);
+    }
+
+    container._readCondition = readCondition;
+  }
+
+  function renderEffectsBuilder(container, value, title) {
+    const effects = normalizeEffectsValue(value);
+    container.className = "builder-shell";
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "builder-header";
+    const heading = document.createElement("strong");
+    heading.textContent = title;
+    header.appendChild(heading);
+
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "btn btn-secondary";
+    addButton.textContent = "효과 추가";
+    addButton.addEventListener("click", () => {
+      const current = readEffectsListFromContainer(container);
+      current.push(getDefaultEffectValue("setFlag"));
+      markDirty("효과 편집 중입니다.");
+      renderEffectsBuilder(container, current, title);
+    });
+    header.appendChild(addButton);
+    container.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "builder-body";
+    container.appendChild(body);
+
+    const list = document.createElement("div");
+    list.className = "effects-list";
+    body.appendChild(list);
+
+    if (!effects.length) {
+      body.appendChild(createHint("효과가 없으면 상태 변화 없이 다음 장면으로 이동합니다."));
+    }
+
+    effects.forEach((effect, index) => {
+      const row = document.createElement("div");
+      row.className = "effect-row";
+      renderEffectRow(row, effect, index, title, container);
+      list.appendChild(row);
+    });
+
+    container._readEffects = () => {
+      const values = Array.from(list.querySelectorAll(":scope > .effect-row"))
+        .map((row) => row._readEffect())
+        .filter((item) => item !== undefined);
+      if (!values.length) return undefined;
+      return values.length === 1 ? values[0] : values;
+    };
+  }
+
+  function renderEffectRow(row, effectValue, index, title, rootContainer) {
+    const normalized = normalizeEffectValue(effectValue);
+    row.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "effect-row-header";
+    const heading = document.createElement("strong");
+    heading.textContent = `${title} ${index + 1}`;
+    header.appendChild(heading);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "btn btn-danger";
+    removeButton.textContent = "삭제";
+    removeButton.addEventListener("click", () => {
+      const current = readEffectsListFromContainer(rootContainer);
+      current.splice(index, 1);
+      markDirty("효과 편집 중입니다.");
+      renderEffectsBuilder(rootContainer, current, title);
+    });
+    header.appendChild(removeButton);
+    row.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "builder-body";
+    row.appendChild(body);
+
+    const typeLabel = createStandaloneField("효과 타입");
+    const typeSelect = document.createElement("select");
+    EFFECT_TYPE_OPTIONS.forEach((optionData) => {
+      const option = document.createElement("option");
+      option.value = optionData.value;
+      option.textContent = optionData.label;
+      typeSelect.appendChild(option);
+    });
+    typeSelect.value = normalized.type;
+    typeSelect.addEventListener("change", () => {
+      const current = readEffectsListFromContainer(rootContainer);
+      current[index] = getDefaultEffectValue(typeSelect.value);
+      markDirty("효과 편집 중입니다.");
+      renderEffectsBuilder(rootContainer, current, title);
+    });
+    typeLabel.appendChild(typeSelect);
+    body.appendChild(typeLabel);
+
+    let readEffect = () => undefined;
+
+    if (["setFlag", "clearFlag", "addItem", "removeItem"].includes(normalized.type)) {
+      const targetLabel = createStandaloneField(normalized.type.includes("Flag") ? "키" : "아이템");
+      const targetInput = document.createElement("input");
+      targetInput.type = "text";
+      targetInput.value = normalized.target || "";
+      targetInput.addEventListener("input", () => markDirty("효과 편집 중입니다."));
+      targetLabel.appendChild(targetInput);
+      body.appendChild(targetLabel);
+      readEffect = () => {
+        const target = targetInput.value.trim();
+        if (!target) return undefined;
+        return { [normalized.type]: target };
+      };
+    } else if (["addStat", "setStat"].includes(normalized.type)) {
+      const inline = document.createElement("div");
+      inline.className = "builder-inline";
+
+      const statLabel = createStandaloneField("스탯 키");
+      const statInput = document.createElement("input");
+      statInput.type = "text";
+      statInput.value = normalized.target || "";
+      statInput.addEventListener("input", () => markDirty("효과 편집 중입니다."));
+      statLabel.appendChild(statInput);
+      inline.appendChild(statLabel);
+
+      const valueLabel = createStandaloneField("값");
+      const valueInput = document.createElement("input");
+      valueInput.type = "number";
+      valueInput.step = "1";
+      valueInput.value = normalized.value ?? 1;
+      valueInput.addEventListener("input", () => markDirty("효과 편집 중입니다."));
+      valueLabel.appendChild(valueInput);
+      inline.appendChild(valueLabel);
+      body.appendChild(inline);
+
+      readEffect = () => {
+        const target = statInput.value.trim();
+        if (!target) return undefined;
+        return {
+          [normalized.type]: target,
+          value: Number(valueInput.value || 0),
+        };
+      };
+    } else {
+      const raw = document.createElement("textarea");
+      raw.className = "effect-raw";
+      raw.rows = 8;
+      raw.spellcheck = false;
+      raw.value = normalized.rawText;
+      raw.addEventListener("input", () => markDirty("효과 편집 중입니다."));
+      body.appendChild(raw);
+      readEffect = () => parseOptionalJson(raw.value, `${title} raw JSON`);
+    }
+
+    row._readEffect = readEffect;
+  }
+
+  function normalizeConditionValue(value) {
+    if (value === undefined) return { type: "none" };
+    if (value && value.__raw !== undefined) return { type: "raw", rawText: value.__raw };
+    if (Array.isArray(value)) return { type: "and", children: value };
+    if (!value || typeof value !== "object") return { type: "raw", rawText: JSON.stringify(value, null, 2) };
+    if (Array.isArray(value.and)) return { type: "and", children: value.and };
+    if (Array.isArray(value.or)) return { type: "or", children: value.or };
+    if (typeof value.flag === "string") return { type: "flag", name: value.flag.replace(/^!/, ""), negate: value.flag.startsWith("!") };
+    if (typeof value.item === "string") return { type: "item", name: value.item.replace(/^!/, ""), negate: value.item.startsWith("!") };
+    if (typeof value.visited === "string") return { type: "visited", name: value.visited.replace(/^!/, ""), negate: value.visited.startsWith("!") };
+    if (typeof value.stat === "string") {
+      const operator = STAT_OPERATORS.find((operatorName) => value[operatorName] !== undefined);
+      if (operator) {
+        return { type: "stat", stat: value.stat, operator, value: value[operator] };
+      }
+    }
+    return { type: "raw", rawText: JSON.stringify(value, null, 2) };
+  }
+
+  function normalizeEffectValue(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return { type: "raw", rawText: JSON.stringify(value, null, 2) };
+    }
+    if (typeof value.setFlag === "string") return { type: "setFlag", target: value.setFlag };
+    if (typeof value.clearFlag === "string") return { type: "clearFlag", target: value.clearFlag };
+    if (typeof value.addItem === "string") return { type: "addItem", target: value.addItem };
+    if (typeof value.removeItem === "string") return { type: "removeItem", target: value.removeItem };
+    if (typeof value.addStat === "string") return { type: "addStat", target: value.addStat, value: value.value ?? 1 };
+    if (typeof value.setStat === "string") return { type: "setStat", target: value.setStat, value: value.value ?? 0 };
+    return { type: "raw", rawText: JSON.stringify(value, null, 2) };
+  }
+
+  function normalizeEffectsValue(value) {
+    if (value === undefined) return [];
+    return Array.isArray(value) ? value.slice() : [value];
+  }
+
+  function getDefaultConditionValue(type) {
+    if (type === "flag") return { flag: "" };
+    if (type === "item") return { item: "" };
+    if (type === "visited") return { visited: "" };
+    if (type === "stat") return { stat: "", gte: 0 };
+    if (type === "and") return { and: [getDefaultConditionValue("flag")] };
+    if (type === "or") return { or: [getDefaultConditionValue("flag")] };
+    if (type === "raw") return { __raw: "{}" };
+    return undefined;
+  }
+
+  function getDefaultEffectValue(type) {
+    if (type === "setFlag") return { setFlag: "" };
+    if (type === "clearFlag") return { clearFlag: "" };
+    if (type === "addItem") return { addItem: "" };
+    if (type === "removeItem") return { removeItem: "" };
+    if (type === "addStat") return { addStat: "", value: 1 };
+    if (type === "setStat") return { setStat: "", value: 0 };
+    return { __raw: "{}" };
+  }
+
+  function readEffectsListFromContainer(container) {
+    const current = container._readEffects ? container._readEffects() : undefined;
+    if (current === undefined) return [];
+    return Array.isArray(current) ? current.slice() : [current];
+  }
+
+  function renameSceneId(currentSceneId, nextSceneId) {
+    const normalizedNextId = nextSceneId.trim();
+    if (!normalizedNextId) {
+      throw new Error("장면 ID는 비워둘 수 없습니다.");
+    }
+    if (normalizedNextId === currentSceneId) return currentSceneId;
+    if (state.data.scenes[normalizedNextId]) {
+      throw new Error(`장면 ID ${normalizedNextId}는 이미 존재합니다.`);
+    }
+
+    const renamedScenes = {};
+    Object.entries(state.data.scenes).forEach(([sceneId, scene]) => {
+      renamedScenes[sceneId === currentSceneId ? normalizedNextId : sceneId] = scene;
+    });
+    state.data.scenes = renamedScenes;
+
+    if (state.data.startScene === currentSceneId) {
+      state.data.startScene = normalizedNextId;
+    }
+
+    Object.values(state.data.scenes).forEach((scene) => {
+      if (scene.autoNext === currentSceneId) {
+        scene.autoNext = normalizedNextId;
+      }
+      (scene.choices || []).forEach((choice) => {
+        if (choice.next === currentSceneId) {
+          choice.next = normalizedNextId;
+        }
+      });
+    });
+
+    state.selectedSceneId = normalizedNextId;
+    updateReferenceList();
+    markDirty(`장면 ID를 ${currentSceneId}에서 ${normalizedNextId}로 변경하고 참조를 갱신했습니다.`);
+    return normalizedNextId;
+  }
+
+  function renameEndingId(currentEndingId, nextEndingId) {
+    const normalizedNextId = nextEndingId.trim();
+    if (!normalizedNextId) {
+      throw new Error("엔딩 ID는 비워둘 수 없습니다.");
+    }
+    if (normalizedNextId === currentEndingId) return currentEndingId;
+    if (state.data.endings[normalizedNextId]) {
+      throw new Error(`엔딩 ID ${normalizedNextId}는 이미 존재합니다.`);
+    }
+
+    const renamedEndings = {};
+    Object.entries(state.data.endings).forEach(([endingId, ending]) => {
+      renamedEndings[endingId === currentEndingId ? normalizedNextId : endingId] = ending;
+    });
+    state.data.endings = renamedEndings;
+
+    Object.values(state.data.scenes).forEach((scene) => {
+      if (scene.ending === currentEndingId) {
+        scene.ending = normalizedNextId;
+      }
+    });
+
+    state.selectedEndingId = normalizedNextId;
+    markDirty(`엔딩 ID를 ${currentEndingId}에서 ${normalizedNextId}로 변경하고 참조를 갱신했습니다.`);
+    return normalizedNextId;
+  }
+
+  function isEmptyObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0;
+  }
+
+  function isEmptyValue(value) {
+    if (value === undefined) return true;
+    if (Array.isArray(value)) return value.length === 0;
+    return isEmptyObject(value);
+  }
+
+  function findSceneReferences(targetSceneId) {
+    const references = [];
+
+    if (state.data.startScene === targetSceneId) {
+      references.push(`- 기본 정보: startScene이 ${targetSceneId}를 가리킵니다.`);
+    }
+
+    Object.entries(state.data.scenes).forEach(([sceneId, scene]) => {
+      if (sceneId === targetSceneId) return;
+      if (scene.autoNext === targetSceneId) {
+        references.push(`- 장면 ${sceneId}: autoNext가 ${targetSceneId}입니다.`);
+      }
+      (scene.choices || []).forEach((choice, index) => {
+        if (choice.next === targetSceneId) {
+          references.push(`- 장면 ${sceneId} 선택지 ${index + 1}: next가 ${targetSceneId}입니다.`);
+        }
+      });
+    });
+
+    return references;
+  }
+
+  async function writeToFileHandle(handle, source) {
+    const writable = await handle.createWritable();
+    await writable.write(source);
+    await writable.close();
+  }
+
+  function downloadTextFile(filename, content, mimeType = "text/javascript;charset=utf-8") {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function markDirty(message) {
+    state.dirty = true;
+    setStatus(message, "warn");
+  }
+
+  function setStatus(message, tone = "warn") {
+    elements.status.textContent = message;
+    elements.status.dataset.tone = tone;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatIssueReport(title, issues) {
+    const visibleIssues = issues.slice(0, 20);
+    const suffix = issues.length > visibleIssues.length
+      ? `\n\n... 외 ${issues.length - visibleIssues.length}건`
+      : "";
+    return `${title}\n\n${visibleIssues.join("\n")}${suffix}`;
+  }
+
+  function escapeInlineScript(value) {
+    return String(value).replace(/<\/script/gi, "<\\/script");
+  }
+
+  function insertBeforeClosingTag(html, tagName, snippet) {
+    const pattern = new RegExp(`</${tagName}>`, "i");
+    if (!pattern.test(html)) {
+      throw new Error(`index.html에서 </${tagName}> 태그를 찾지 못해 export 결과를 조립할 수 없습니다.`);
+    }
+    return html.replace(pattern, `${snippet}\n</${tagName}>`);
+  }
+
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function sanitizeFilename(value) {
+    return value
+      .trim()
+      .replace(/[<>:"/\\|?*]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") || "fine-game";
+  }
+})();
+  </script>
+  <!-- INLINE_EDITOR_SCRIPTS_END -->
+</body>
+</html>
