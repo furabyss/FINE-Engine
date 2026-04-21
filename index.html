@@ -3650,10 +3650,6 @@ const Engine = (() => {
   function buildGameDataSource(data) {
     const serializable = buildSerializableGameData(data);
     return [
-      "/* =========================================================",
-      "   game-data.js — editor-generated story data",
-      "   ========================================================= */",
-      "",
       `const GAME_DATA = ${formatValue(serializable, 0)};`,
       "",
     ].join("\n");
@@ -3661,9 +3657,9 @@ const Engine = (() => {
 
   function buildStandaloneHtml({ indexHtml, stylesCss, engineJs, appJs, gameDataSource, gameTitle }) {
     const warnings = [];
-    const inlineStyles = `<style>\n${stylesCss}\n</style>`;
+    const inlineStyles = `<style>\n${stripLeadingBannerComment(stylesCss)}\n</style>`;
     const inlineScripts = [engineJs, gameDataSource, appJs]
-        .map((source) => `<script>\n${escapeInlineScript(source)}\n<\/script>`)
+      .map((source) => `<script>\n${escapeInlineScript(stripLeadingBannerComment(source))}\n<\/script>`)
       .join("\n");
 
     let html = indexHtml;
@@ -3679,6 +3675,10 @@ const Engine = (() => {
     } else {
       warnings.push("- index.html에 <title> 태그가 없어 export 과정에서 새 title 태그를 추가했습니다.");
       html = insertBeforeClosingTag(html, "head", `  <title>${escapeHtml(gameTitle)}</title>`);
+    }
+
+    if (/<h1>[\s\S]*?<\/h1>/i.test(html)) {
+      html = html.replace(/<h1>[\s\S]*?<\/h1>/i, `<h1>${escapeHtml(gameTitle)}</h1>`);
     }
 
     html = html.replace(/\s*<link[^>]+href="favicon[^"]*"[^>]*>\s*/gi, "\n");
@@ -4558,6 +4558,10 @@ const Engine = (() => {
 
   function escapeInlineScript(value) {
     return String(value).replace(/<\/script/gi, "<\\/script");
+  }
+
+  function stripLeadingBannerComment(value) {
+    return String(value).replace(/^\s*\/\*[\s\S]*?\*\/\s*/, "");
   }
 
   function insertBeforeClosingTag(html, tagName, snippet) {
