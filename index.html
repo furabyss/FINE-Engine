@@ -22,12 +22,41 @@
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-sm: 10px;
+  --scrollbar-thumb: rgba(182, 145, 106, 0.42);
+  --scrollbar-thumb-hover: rgba(143, 53, 28, 0.34);
   --font-body: "Pretendard", "Noto Sans KR", sans-serif;
   --font-display: "Nanum Myeongjo", "AppleMyungjo", serif;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
 }
 
 html, body {
@@ -112,6 +141,12 @@ textarea {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.editor-actions .btn {
+  padding: 11px 16px;
+  font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .btn {
@@ -260,11 +295,22 @@ textarea {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 18px;
+  align-items: start;
+  position: relative;
+}
+
+.editor-split.is-list-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.editor-split.is-list-collapsed .list-pane {
+  display: none;
 }
 
 .list-pane,
 .editor-pane {
   min-height: 70svh;
+  overflow: hidden;
 }
 
 .list-pane {
@@ -272,6 +318,7 @@ textarea {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .list-pane-header {
@@ -279,11 +326,34 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+  padding-right: 66px;
 }
 
 .list-pane-header p {
   margin: 8px 0 0;
   font-size: 0.9rem;
+}
+
+.list-pane-search {
+  margin-bottom: 14px;
+}
+
+.list-pane-search input {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(184, 145, 106, 0.26);
+  background: #fffdf8;
+  color: var(--text);
+  padding: 12px 14px;
+  line-height: 1.5;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.list-pane-search input:focus {
+  outline: none;
+  border-color: rgba(184, 77, 47, 0.5);
+  box-shadow: 0 0 0 4px rgba(184, 77, 47, 0.08);
+  background: #fff;
 }
 
 .list-pane-actions {
@@ -293,41 +363,19 @@ textarea {
 }
 
 .item-list {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow: auto;
-  padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(182, 145, 106, 0.5) transparent;
+  overflow: visible;
+  padding-right: 0;
 }
 
-.item-list::-webkit-scrollbar,
-.choice-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.item-list::-webkit-scrollbar-track,
-.choice-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.item-list::-webkit-scrollbar-thumb,
-.choice-list::-webkit-scrollbar-thumb {
-  background: rgba(182, 145, 106, 0.42);
-  border-radius: 999px;
-}
-
-.item-list::-webkit-scrollbar-thumb:hover,
-.choice-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(143, 53, 28, 0.34);
-}
-
-.item-list::-webkit-scrollbar-button,
-.choice-list::-webkit-scrollbar-button {
-  display: none;
+.list-pane.is-scrollable,
+.editor-pane.is-scrollable {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .item-row {
@@ -357,8 +405,54 @@ textarea {
   font-size: 0.85rem;
 }
 
+.item-list-empty {
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(184, 145, 106, 0.32);
+  background: rgba(255, 250, 242, 0.8);
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .editor-pane {
   padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-pane-toggle-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  min-width: 44px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.split-toggle-button {
+  display: none;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.editor-split.is-list-collapsed .split-toggle-button {
+  display: inline-flex;
+}
+
+.editor-split.is-list-collapsed .editor-form > .section-heading:first-child {
+  justify-content: flex-start;
+}
+
+.editor-split.is-list-collapsed .editor-form > .section-heading:first-child .split-toggle-button {
+  order: -1;
+  margin-right: 12px;
 }
 
 .editor-form {
@@ -524,9 +618,8 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 46svh;
-  overflow: auto;
-  padding-right: 4px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .choice-card {
@@ -650,10 +743,12 @@ textarea {
   .list-pane,
   .editor-pane {
     min-height: auto;
+    height: auto !important;
+    overflow: visible;
   }
 
-  .item-list {
-    max-height: 34svh;
+  .editor-split.is-list-collapsed .list-pane {
+    display: none;
   }
 }
 
@@ -691,6 +786,17 @@ textarea {
     flex: 1;
   }
 
+  .split-toggle-button {
+    order: 0;
+    margin-right: 0;
+    flex: 0 0 auto;
+  }
+
+  .editor-actions .btn {
+    padding: 10px 14px;
+    font-size: 0.86rem;
+  }
+
   .form-grid,
   .choice-grid,
   .editor-toolbar,
@@ -717,7 +823,7 @@ textarea {
   }
 }
   </style>
-  <!-- INLINE_EDITOR_STYLE_END -->
+<!-- INLINE_EDITOR_STYLE_END -->
 </head>
 <body>
   <div class="editor-shell">
@@ -792,6 +898,7 @@ textarea {
       <section id="tab-scenes" class="tab-panel">
         <div class="editor-split">
           <aside class="list-pane panel-card">
+            <button id="btn-collapse-scene-list" class="btn btn-secondary list-pane-toggle-button" type="button" aria-expanded="true" aria-controls="scene-list" aria-label="장면 목록 접기">접기</button>
             <div class="list-pane-header">
               <div>
                 <h2>장면 목록</h2>
@@ -801,6 +908,9 @@ textarea {
                 <button id="btn-add-scene" class="btn btn-secondary" type="button">추가</button>
                 <button id="btn-delete-scene" class="btn btn-danger" type="button">삭제</button>
               </div>
+            </div>
+            <div class="list-pane-search">
+              <input id="scene-search" type="search" placeholder="장면 ID 또는 제목 검색" aria-label="장면 검색">
             </div>
             <div id="scene-list" class="item-list" role="listbox" aria-label="장면 목록"></div>
           </aside>
@@ -812,6 +922,7 @@ textarea {
                   <h2>장면 편집</h2>
                   <p id="scene-form-caption">장면을 선택하세요.</p>
                 </div>
+                <button id="btn-toggle-scene-list" class="btn btn-secondary split-toggle-button" type="button" aria-expanded="false" aria-controls="scene-list" aria-label="장면 목록 펼치기">펼치기</button>
               </div>
 
               <div class="form-grid">
@@ -863,6 +974,7 @@ textarea {
       <section id="tab-endings" class="tab-panel">
         <div class="editor-split">
           <aside class="list-pane panel-card">
+            <button id="btn-collapse-ending-list" class="btn btn-secondary list-pane-toggle-button" type="button" aria-expanded="true" aria-controls="ending-list" aria-label="엔딩 목록 접기">접기</button>
             <div class="list-pane-header">
               <div>
                 <h2>엔딩 목록</h2>
@@ -872,6 +984,9 @@ textarea {
                 <button id="btn-add-ending" class="btn btn-secondary" type="button">추가</button>
                 <button id="btn-delete-ending" class="btn btn-danger" type="button">삭제</button>
               </div>
+            </div>
+            <div class="list-pane-search">
+              <input id="ending-search" type="search" placeholder="엔딩 ID 또는 제목 검색" aria-label="엔딩 검색">
             </div>
             <div id="ending-list" class="item-list" role="listbox" aria-label="엔딩 목록"></div>
           </aside>
@@ -883,6 +998,7 @@ textarea {
                   <h2>엔딩 편집</h2>
                   <p id="ending-form-caption">엔딩을 선택하세요.</p>
                 </div>
+                <button id="btn-toggle-ending-list" class="btn btn-secondary split-toggle-button" type="button" aria-expanded="false" aria-controls="ending-list" aria-label="엔딩 목록 펼치기">펼치기</button>
               </div>
 
               <div class="form-grid">
@@ -972,9 +1088,9 @@ window.FINE_EMBEDDED_EXPORT_ASSETS = {
     </div>
   </div>
 
-  <script src="js/engine.js"><\/script>
-  <script src="js/game-data.js"><\/script>
-  <script src="js/app.js"><\/script>
+    <script src="js/engine.js"><\/script>
+    <script src="js/game-data.js"><\/script>
+    <script src="js/app.js"><\/script>
 </body>
 </html>
 `,
@@ -2489,7 +2605,16 @@ const Engine = (() => {
     selectedSceneId: null,
     selectedEndingId: null,
     importedFileName: null,
+    sceneSearchQuery: "",
+    endingSearchQuery: "",
+    sceneListCollapsed: false,
+    endingListCollapsed: false,
     dirty: false,
+  };
+
+  const splitPaneSync = {
+    scheduled: false,
+    resizeObserver: null,
   };
 
   const elements = {
@@ -2515,7 +2640,15 @@ const Engine = (() => {
     metaInventory: document.getElementById("meta-inventory"),
     metaFlags: document.getElementById("meta-flags"),
     metaStats: document.getElementById("meta-stats"),
+    sceneSplit: document.querySelector("#tab-scenes .editor-split"),
+    sceneListPane: document.querySelector("#tab-scenes .list-pane"),
+    sceneListHeader: document.querySelector("#tab-scenes .list-pane-header"),
+    sceneSearchInput: document.getElementById("scene-search"),
     sceneList: document.getElementById("scene-list"),
+    sceneForm: document.getElementById("scene-form"),
+    sceneEditorPane: document.querySelector("#tab-scenes .editor-pane"),
+    collapseSceneListButton: document.getElementById("btn-collapse-scene-list"),
+    toggleSceneListButton: document.getElementById("btn-toggle-scene-list"),
     sceneFormCaption: document.getElementById("scene-form-caption"),
     sceneId: document.getElementById("scene-id"),
     sceneTitle: document.getElementById("scene-title"),
@@ -2528,7 +2661,15 @@ const Engine = (() => {
     addSceneButton: document.getElementById("btn-add-scene"),
     deleteSceneButton: document.getElementById("btn-delete-scene"),
     addChoiceButton: document.getElementById("btn-add-choice"),
+    endingSplit: document.querySelector("#tab-endings .editor-split"),
+    endingListPane: document.querySelector("#tab-endings .list-pane"),
+    endingListHeader: document.querySelector("#tab-endings .list-pane-header"),
+    endingSearchInput: document.getElementById("ending-search"),
     endingList: document.getElementById("ending-list"),
+    endingForm: document.getElementById("ending-form"),
+    endingEditorPane: document.querySelector("#tab-endings .editor-pane"),
+    collapseEndingListButton: document.getElementById("btn-collapse-ending-list"),
+    toggleEndingListButton: document.getElementById("btn-toggle-ending-list"),
     endingFormCaption: document.getElementById("ending-form-caption"),
     endingId: document.getElementById("ending-id"),
     endingTitle: document.getElementById("ending-title"),
@@ -2544,6 +2685,7 @@ const Engine = (() => {
     ensureSelections();
     renderHelpModal();
     bindEvents();
+    setupSplitPaneSync();
     render();
     setStatus("빈 에디터를 불러왔습니다. JS 파일을 업로드하거나 새 데이터를 작성하세요.", "warn");
   }
@@ -2579,6 +2721,12 @@ const Engine = (() => {
 
     elements.sceneId.addEventListener("input", () => markDirty("장면 ID 변경 대기 중입니다."));
     elements.endingId.addEventListener("input", () => markDirty("엔딩 ID 변경 대기 중입니다."));
+    elements.sceneSearchInput.addEventListener("input", handleSceneSearchInput);
+    elements.endingSearchInput.addEventListener("input", handleEndingSearchInput);
+    elements.collapseSceneListButton.addEventListener("click", toggleSceneList);
+    elements.toggleSceneListButton.addEventListener("click", toggleSceneList);
+    elements.collapseEndingListButton.addEventListener("click", toggleEndingList);
+    elements.toggleEndingListButton.addEventListener("click", toggleEndingList);
     elements.addSceneButton.addEventListener("click", addScene);
     elements.deleteSceneButton.addEventListener("click", deleteScene);
     elements.addChoiceButton.addEventListener("click", addChoice);
@@ -2599,6 +2747,7 @@ const Engine = (() => {
         hideHelpModal();
       }
     });
+    window.addEventListener("resize", scheduleSplitPaneSync);
   }
 
   function render() {
@@ -2616,6 +2765,8 @@ const Engine = (() => {
       panel.classList.toggle("is-active", panel.id === `tab-${state.activeTab}`);
     });
 
+    renderSplitPaneStates();
+
     if (state.activeTab === "meta") renderMetaForm();
     if (state.activeTab === "scenes") {
       renderSceneList();
@@ -2625,6 +2776,119 @@ const Engine = (() => {
       renderEndingList();
       renderEndingForm();
     }
+
+    scheduleSplitPaneSync();
+  }
+
+  function renderSplitPaneStates() {
+    renderSplitPaneState({
+      split: elements.sceneSplit,
+      collapseButton: elements.collapseSceneListButton,
+      expandButton: elements.toggleSceneListButton,
+      collapsed: state.sceneListCollapsed,
+      label: "장면 목록",
+    });
+    renderSplitPaneState({
+      split: elements.endingSplit,
+      collapseButton: elements.collapseEndingListButton,
+      expandButton: elements.toggleEndingListButton,
+      collapsed: state.endingListCollapsed,
+      label: "엔딩 목록",
+    });
+  }
+
+  function renderSplitPaneState({ split, collapseButton, expandButton, collapsed, label }) {
+    if (!split || !collapseButton || !expandButton) {
+      return;
+    }
+
+    split.classList.toggle("is-list-collapsed", collapsed);
+    collapseButton.setAttribute("aria-expanded", String(!collapsed));
+    collapseButton.setAttribute("aria-label", `${label} 접기`);
+    expandButton.setAttribute("aria-expanded", String(!collapsed));
+    expandButton.setAttribute("aria-label", `${label} 펼치기`);
+  }
+
+  function setupSplitPaneSync() {
+    if (typeof ResizeObserver !== "function") {
+      return;
+    }
+
+    splitPaneSync.resizeObserver = new ResizeObserver(() => {
+      scheduleSplitPaneSync();
+    });
+
+    [
+      elements.sceneListHeader,
+      elements.sceneList,
+      elements.sceneForm,
+      elements.endingListHeader,
+      elements.endingList,
+      elements.endingForm,
+    ]
+      .filter(Boolean)
+      .forEach((target) => {
+        splitPaneSync.resizeObserver.observe(target);
+      });
+  }
+
+  function scheduleSplitPaneSync() {
+    if (splitPaneSync.scheduled) {
+      return;
+    }
+
+    splitPaneSync.scheduled = true;
+    requestAnimationFrame(() => {
+      splitPaneSync.scheduled = false;
+      syncActiveSplitPaneHeights();
+    });
+  }
+
+  function syncActiveSplitPaneHeights() {
+    syncSplitPaneHeights(
+      state.activeTab === "scenes" ? elements.sceneSplit : null,
+      [elements.sceneListPane, elements.sceneEditorPane]
+    );
+    syncSplitPaneHeights(
+      state.activeTab === "endings" ? elements.endingSplit : null,
+      [elements.endingListPane, elements.endingEditorPane]
+    );
+  }
+
+  function syncSplitPaneHeights(split, panes) {
+    if (!panes.every(Boolean)) {
+      return;
+    }
+
+    if (
+      !split ||
+      !split.offsetParent ||
+      split.classList.contains("is-list-collapsed") ||
+      window.matchMedia("(max-width: 1120px)").matches
+    ) {
+      resetSplitPaneHeights(panes);
+      return;
+    }
+
+    resetSplitPaneHeights(panes);
+
+    const naturalHeights = panes.map((pane) => Math.ceil(pane.getBoundingClientRect().height));
+    const targetHeight = Math.min(...naturalHeights);
+
+    panes.forEach((pane) => {
+      pane.style.height = `${targetHeight}px`;
+      pane.classList.toggle("is-scrollable", pane.scrollHeight > targetHeight + 1);
+    });
+  }
+
+  function resetSplitPaneHeights(panes) {
+    panes.forEach((pane) => {
+      if (!pane) {
+        return;
+      }
+      pane.style.height = "";
+      pane.classList.remove("is-scrollable");
+    });
   }
 
   function updateHeader() {
@@ -2699,9 +2963,24 @@ const Engine = (() => {
 
   function renderSceneList() {
     const sceneIds = Object.keys(state.data.scenes);
+    const query = normalizeSearchQuery(state.sceneSearchQuery);
     elements.sceneList.innerHTML = "";
+    elements.sceneSearchInput.value = state.sceneSearchQuery;
 
-    sceneIds.forEach((sceneId) => {
+    const filteredSceneIds = sceneIds.filter((sceneId) => {
+      const title = state.data.scenes[sceneId].title || "";
+      return matchesListSearch(sceneId, title, query);
+    });
+
+    if (!filteredSceneIds.length) {
+      elements.sceneList.appendChild(
+        createEmptyListMessage(query ? "검색 결과가 없습니다." : "장면이 없습니다.")
+      );
+      scheduleSplitPaneSync();
+      return;
+    }
+
+    filteredSceneIds.forEach((sceneId) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `item-row${sceneId === state.selectedSceneId ? " is-active" : ""}`;
@@ -2715,6 +2994,8 @@ const Engine = (() => {
       });
       elements.sceneList.appendChild(button);
     });
+
+    scheduleSplitPaneSync();
   }
 
   function renderSceneForm() {
@@ -2751,6 +3032,7 @@ const Engine = (() => {
     elements.sceneAutoNext.value = scene.autoNext || "";
     elements.sceneAutoDelay.value = scene.autoDelay ?? "";
     renderChoices(scene.choices || []);
+    scheduleSplitPaneSync();
   }
 
   function renderChoices(choices) {
@@ -2760,6 +3042,7 @@ const Engine = (() => {
       empty.className = "choice-card";
       empty.innerHTML = "<strong>선택지가 없습니다.</strong><p>새 선택지를 추가해 분기를 만들 수 있습니다.</p>";
       elements.sceneChoices.appendChild(empty);
+      scheduleSplitPaneSync();
       return;
     }
 
@@ -2804,13 +3087,30 @@ const Engine = (() => {
       card.appendChild(grid);
       elements.sceneChoices.appendChild(card);
     });
+
+    scheduleSplitPaneSync();
   }
 
   function renderEndingList() {
     const endingIds = Object.keys(state.data.endings);
+    const query = normalizeSearchQuery(state.endingSearchQuery);
     elements.endingList.innerHTML = "";
+    elements.endingSearchInput.value = state.endingSearchQuery;
 
-    endingIds.forEach((endingId) => {
+    const filteredEndingIds = endingIds.filter((endingId) => {
+      const title = state.data.endings[endingId].title || "";
+      return matchesListSearch(endingId, title, query);
+    });
+
+    if (!filteredEndingIds.length) {
+      elements.endingList.appendChild(
+        createEmptyListMessage(query ? "검색 결과가 없습니다." : "엔딩이 없습니다.")
+      );
+      scheduleSplitPaneSync();
+      return;
+    }
+
+    filteredEndingIds.forEach((endingId) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `item-row${endingId === state.selectedEndingId ? " is-active" : ""}`;
@@ -2824,6 +3124,8 @@ const Engine = (() => {
       });
       elements.endingList.appendChild(button);
     });
+
+    scheduleSplitPaneSync();
   }
 
   function renderEndingForm() {
@@ -2840,6 +3142,48 @@ const Engine = (() => {
     elements.endingId.value = state.selectedEndingId;
     elements.endingTitle.value = ending.title || "";
     elements.endingDescription.value = ending.description || "";
+    scheduleSplitPaneSync();
+  }
+
+  function handleSceneSearchInput(event) {
+    state.sceneSearchQuery = event.target.value;
+    renderSceneList();
+  }
+
+  function handleEndingSearchInput(event) {
+    state.endingSearchQuery = event.target.value;
+    renderEndingList();
+  }
+
+  function toggleSceneList() {
+    state.sceneListCollapsed = !state.sceneListCollapsed;
+    renderSplitPaneStates();
+    scheduleSplitPaneSync();
+  }
+
+  function toggleEndingList() {
+    state.endingListCollapsed = !state.endingListCollapsed;
+    renderSplitPaneStates();
+    scheduleSplitPaneSync();
+  }
+
+  function normalizeSearchQuery(value) {
+    return (value || "").trim().toLocaleLowerCase();
+  }
+
+  function matchesListSearch(id, title, query) {
+    if (!query) {
+      return true;
+    }
+
+    return [id, title].some((value) => value.toLocaleLowerCase().includes(query));
+  }
+
+  function createEmptyListMessage(message) {
+    const empty = document.createElement("div");
+    empty.className = "item-list-empty";
+    empty.textContent = message;
+    return empty;
   }
 
   function updateReferenceList() {
@@ -3288,7 +3632,7 @@ const Engine = (() => {
     const warnings = [];
     const inlineStyles = `<style>\n${stylesCss}\n</style>`;
     const inlineScripts = [engineJs, gameDataSource, appJs]
-      .map((source) => `<script>\n${escapeInlineScript(source)}\n<\/script>`)
+        .map((source) => `<script>\n${escapeInlineScript(source)}\n<\/script>`)
       .join("\n");
 
     let html = indexHtml;
@@ -4207,6 +4551,6 @@ const Engine = (() => {
   }
 })();
   </script>
-  <!-- INLINE_EDITOR_SCRIPTS_END -->
+<!-- INLINE_EDITOR_SCRIPTS_END -->
 </body>
 </html>
